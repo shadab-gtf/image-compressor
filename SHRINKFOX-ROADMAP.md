@@ -13,8 +13,8 @@ Browser processing avoids a paid API call for every edit. Hosting, model downloa
 - Compression, resizing, conversion, batch processing and ZIP downloads.
 - Target-size workflows for 100 KB, 200 KB and 500 KB, with honest target limitations.
 - JPEG, PNG and browser-dependent WebP/AVIF output; supported input formats are documented on the format page.
-- Portrait background removal, plain-background removal and transparent PNG export.
-- Contrast, color and sharpening controls; optional smooth 2× enlargement. This is not AI restoration.
+- BiRefNet Lite general background removal, portrait/plain-background alternatives and transparent PNG export.
+- Real-ESRGAN General restoration with 2×, 3× and 4× output, plus color and sharpening controls.
 - Before/after comparison, local processing, metadata controls, PWA/offline support, mobile navigation and keyboard-accessible controls.
 - Dedicated tool pages, useful instructions, page metadata, sitemap/robots generation and automated SEO checks.
 

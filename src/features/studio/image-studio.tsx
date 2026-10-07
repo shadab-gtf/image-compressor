@@ -483,6 +483,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
             <div className="grid grid-cols-2 gap-2">
               {(
                 [
+                  ["general", "BiRefNet AI", "Products, people & objects"],
                   ["portrait", "Portrait AI", "People & headshots"],
                   ["solid", "Simple background", "Plain backdrops"],
                 ] as const
@@ -491,6 +492,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
                   key={value}
                   className={cn(
                     "group flex min-h-24 min-w-0 cursor-pointer flex-col gap-2 rounded-2xl border p-3 hover:border-accent/50 motion-safe:transition-[background-color,border-color,box-shadow,transform] motion-safe:duration-200 motion-safe:active:scale-[.98]",
+                    value === "general" && "col-span-2",
                     settings.method === value
                       ? "border-accent/40 bg-accent-softer"
                       : "border-line bg-surface-2",
@@ -535,14 +537,30 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
               />
             ) : (
               <p className="text-xs leading-5 text-muted">
-                Best for portraits and headshots. The first use downloads about
-                40 MB of AI files; your photo stays on your device.
+                {settings.method === "general"
+                  ? "BiRefNet Lite works on many subjects. First use downloads about 192 MB of model data plus the engine. It needs more memory and time; use Portrait AI on lighter devices. Your photo stays here."
+                  : "Best for portraits and headshots. First use downloads about 40 MB of AI files; your photo stays on your device."}
               </p>
             )}
           </fieldset>
         ) : (
           <fieldset disabled={busy} className="space-y-3">
             <legend className="sr-only">Enhancement controls</legend>
+            <div className="space-y-2 text-sm font-medium text-ink-2">
+              <label htmlFor={`${id}-enhancement`} className="block">Enhancement method</label>
+              <select id={`${id}-enhancement`} className="h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink"
+                value={settings.enhancement}
+                onChange={(event) => changeSetting("enhancement", event.target.value === "ai" ? "ai" : "standard")}
+              >
+                <option value="ai">Real-ESRGAN restoration</option>
+                <option value="standard">Quick adjustments</option>
+              </select>
+            </div>
+            <p className="text-xs leading-5 text-muted">
+              {settings.enhancement === "ai"
+                ? "Restore small, soft photos with Real-ESRGAN General x4v3. Runs locally; up to 1 MP input. First use loads about 5 MB of model data plus the engine. Strong blur may remain and AI can change fine details."
+                : "Fast color and sharpening controls. Enlarging makes more pixels but does not reconstruct missing detail."}
+            </p>
             <StudioSlider
               id={`${id}-contrast`}
               label="Contrast"
@@ -579,12 +597,15 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
                 className="h-12 w-full min-w-0 rounded-xl border border-line bg-surface px-3 text-base text-ink"
                 value={settings.scale}
                 onChange={(event) =>
-                  changeSetting("scale", event.target.value === "2" ? 2 : 1)
+                  changeSetting("scale", event.target.value === "4" ? 4 : event.target.value === "3" ? 3 : event.target.value === "2" ? 2 : 1)
                 }
               >
                 <option value="1">Original resolution</option>
-                <option value="2">2× smooth resize</option>
+                <option value="2">2× — twice the width & height</option>
+                <option value="3">3× — three times the width & height</option>
+                <option value="4">4× — four times the width & height</option>
               </select>
+              {source && <p className="mt-2 text-xs leading-5 text-muted">Output: {source.width * settings.scale} × {source.height * settings.scale} px · PNG</p>}
             </div>
           </fieldset>
         )}
@@ -601,8 +622,8 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
           <div className="space-y-2 pb-2 text-xs leading-5 text-muted">
             <p>
               {removal
-                ? "Use Portrait AI for people. For a product on a plain backdrop, try Simple background and adjust the tolerance. Check hair, glass and fine edges before downloading; difficult cutouts may need editing in another tool."
-                : "Start with small adjustments and compare them with your original. The 2× option enlarges and smooths the image; it cannot recover missing detail. Results are limited to 24 megapixels."}
+                ? "Use BiRefNet AI for products, people and general subjects. Portrait AI uses a smaller model for people. Simple background needs no AI download. Check hair, glass and fine edges before downloading; difficult cutouts may need manual editing."
+                : "Try 2× first for a natural result. AI predicts detail, so check faces, text and textures before downloading. It cannot guarantee recovery of severe motion blur or unreadable text. AI input is limited to 1 megapixel; Quick adjustments supports larger images. All exports must fit 24 megapixels and 8,192 pixels per side."}
             </p>
             <p>
               Animation is saved as a still image. If a large photo is slow to

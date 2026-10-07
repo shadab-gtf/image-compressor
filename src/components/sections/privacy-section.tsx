@@ -21,11 +21,11 @@ export function PrivacySection() {
             ],
             [
               "What your browser downloads",
-              "Opening ShrinkFox downloads the files needed to run the website. Portrait AI also downloads its model and supporting files from this site on first use. These requests do not include your photos. The hosting provider may record normal visit details, such as your IP address and browser type.",
+              "Opening ShrinkFox downloads the files needed to run the website. AI tools also download their model and supporting files from this site on first use. These requests do not include your photos. The hosting provider may record normal visit details, such as your IP address and browser type.",
             ],
             [
               "What is saved for next time",
-              "ShrinkFox remembers your theme and whether you dismissed the install prompt. Your browser can also save website files and the Portrait AI model for repeat visits and offline use. Your images and edited results are not part of this offline cache. Private browsing, low storage or clearing site data can remove saved website files.",
+              "ShrinkFox remembers your theme and whether you dismissed the install prompt. Your browser can also save website files and AI models for repeat visits and offline use. Your images and edited results are not part of this offline cache. Private browsing, low storage or clearing site data can remove saved website files.",
             ],
             [
               "Details stored inside photos",

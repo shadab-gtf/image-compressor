@@ -39,8 +39,11 @@ export function runStudioOperation(
     };
     worker.onerror = () => {
       cleanup();
-      reject(new Error("The image worker stopped unexpectedly. Try a smaller image or reload this page."));
+      reject(new Error(request.type === "process" && request.mode === "remove-background" && request.settings.method === "general"
+        ? "BiRefNet could not finish on this device. Close other tabs, or choose Portrait AI for people or Simple background for a plain backdrop."
+        : "The image worker stopped unexpectedly. Try a smaller image or reload this page."));
     };
     worker.postMessage(request);
   });
 }
+

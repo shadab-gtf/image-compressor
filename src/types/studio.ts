@@ -1,5 +1,5 @@
 export type StudioMode = "remove-background" | "enhance-image";
-export type RemovalMethod = "portrait" | "solid";
+export type RemovalMethod = "general" | "portrait" | "solid";
 
 export interface StudioSettings {
   method: RemovalMethod;
@@ -7,16 +7,18 @@ export interface StudioSettings {
   contrast: number;
   saturation: number;
   sharpness: number;
-  scale: 1 | 2;
+  enhancement: "ai" | "standard";
+  scale: 1 | 2 | 3 | 4;
 }
 
 export const DEFAULT_STUDIO_SETTINGS: StudioSettings = {
-  method: "portrait",
+  method: "general",
   tolerance: 32,
   contrast: 8,
   saturation: 6,
   sharpness: 25,
-  scale: 1,
+  enhancement: "ai",
+  scale: 2,
 };
 
 export interface StudioImage {

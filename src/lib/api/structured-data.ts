@@ -13,8 +13,8 @@ export function getApplicationStructuredData() {
       "Image compression",
       "Batch resizing",
       "Image conversion",
-      "Portrait background removal",
-      "Image enhancement",
+      "People and product background removal",
+      "Real-ESRGAN image restoration and 2×–4× upscaling",
     ],
     ...(SITE.indexable ? { url: SITE.url } : {}),
   };

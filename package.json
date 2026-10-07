@@ -23,6 +23,7 @@
     "setup:studio": "node --experimental-strip-types scripts/setup-studio.ts",
     "test:engines": "node --experimental-strip-types scripts/test-engines.ts",
     "test:studio": "node --experimental-strip-types scripts/test-studio.ts",
+    "test:neural": "node --experimental-strip-types scripts/test-neural-browser.ts",
     "e2e:studio": "node --experimental-strip-types scripts/studio-e2e.ts",
     "test:pwa": "node --experimental-strip-types scripts/test-service-worker.ts",
     "test:site": "node --experimental-strip-types scripts/test-site.ts",
@@ -45,6 +46,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "fflate": "0.8.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

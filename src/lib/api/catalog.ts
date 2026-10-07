@@ -43,18 +43,18 @@ const tools: ToolDefinition[] = [
     seoTitle: "Free Background Remover",
     title: "Remove photo backgrounds for free.",
     description:
-      "Make a transparent portrait for a profile, presentation or design. Portrait AI runs on your device; the simple-background tool also handles product photos on a plain backdrop.",
-    shortDescription: "Cut out portraits or remove plain backgrounds.",
+      "Create a transparent PNG for a product listing, profile or design. BiRefNet AI handles people and general subjects on your device; Portrait AI and Simple background offer lighter alternatives.",
+    shortDescription: "Cut out people, products and general subjects.",
     icon: "cutout",
     featured: true,
     badge: "On-device AI",
     mode: "remove-background",
     steps: [
-      "Choose a portrait or a product photo with a plain background.",
-      "Pick Portrait AI for people or Simple background for plain backdrops.",
+      "Choose the person, product or object you want to cut out.",
+      "Pick BiRefNet AI, Portrait AI or Simple background for your photo.",
       "Check the edges with the comparison slider, then save a transparent PNG.",
     ],
-    note: "Portrait AI downloads its model on first use and is designed for people. Fine hair, glass and busy backgrounds may need further editing. Downloads have no watermark.",
+    note: "BiRefNet Lite downloads about 192 MB of model data on first use and needs more device memory. Portrait AI uses a smaller model for people. Check fine hair, glass and busy scenes before saving. Downloads have no watermark.",
   },
   {
     slug: "resize-image",
@@ -96,20 +96,20 @@ const tools: ToolDefinition[] = [
     slug: "enhance-image",
     name: "Enhance image",
     seoTitle: "Free Image Enhancer",
-    title: "Fine-tune photo color and sharpness.",
+    title: "Give small photos a clearer, larger finish.",
     description:
-      "Give a flat-looking photo more contrast, tone down strong colors or add a little sharpening. Adjust each setting, compare with the original and save a PNG when you are happy with it.",
-    shortDescription: "Adjust color, contrast and sharpening.",
+      "Use free AI enhancement to improve soft, low-resolution photos and enlarge them by 2×, 3× or 4×. Fine-tune color and sharpness, compare the original and save a PNG. Your photo stays on your device; strong blur and missing detail may not be recoverable.",
+    shortDescription: "Improve small photos with AI and 2×–4× upscaling.",
     icon: "enhance",
     featured: true,
     badge: "Free",
     mode: "enhance-image",
     steps: [
-      "Choose a photo whose color, contrast or sharpness you want to adjust.",
-      "Make small changes to the sliders, then apply them to your photo.",
+      "Choose a small photo to improve, or use Quick adjustments for a larger image.",
+      "Choose AI or Quick adjustments, set the output scale and apply your changes.",
       "Compare the result with the original and download the finished PNG.",
     ],
-    note: "These are standard photo adjustments, not AI restoration. The optional 2× resize makes a larger image with smooth interpolation; it cannot recover detail missing from the original.",
+    note: "Real-ESRGAN runs on your device and predicts detail rather than recovering the exact original. Check faces, text and fine textures. AI accepts up to 1 MP input; Quick adjustments handles larger photos. No credits, signup or watermark.",
   },
   {
     slug: "bulk-image-compressor",
@@ -290,7 +290,7 @@ const catalog: SiteCatalog = {
     {
       question: "Are my images uploaded anywhere?",
       answer:
-        "No. Your images are processed in your browser and are not sent to a server. Your browser downloads the website and, if you use Portrait AI, its model. Save the files you want to keep before refreshing or closing the workspace.",
+        "No. Your images are processed in your browser and are not sent to a server. Your browser downloads the website and the model files for any AI tool you choose. Save the files you want to keep before refreshing or closing the workspace.",
     },
     {
       question: "Which image formats can I use?",
@@ -300,12 +300,12 @@ const catalog: SiteCatalog = {
     {
       question: "How does free background removal work?",
       answer:
-        "Choose Portrait AI for a photo of a person. Its model downloads on first use, then processes the image on your device. For a product on a plain backdrop, Simple background removes similar colors connected to the image edges. Compare the result before saving; hair, glass and busy scenes can need extra cleanup.",
+        "BiRefNet AI works with people, products and general subjects. Portrait AI is a smaller model for people. Both download their model on first use, then run on your device. Simple background removes similar colors connected to the image edges without an AI model. Compare the result before saving; difficult edges can need extra cleanup.",
     },
     {
       question: "Can I use it offline?",
       answer:
-        "Open the tool you need while you are online so the app can save its files for later. Portrait AI also needs its first model download. You can then use cached tools offline, although a cleared browser cache, an update or private browsing may require another connection.",
+        "Open the tool you need while you are online so the app can save its files for later. AI tools also need their first model download. You can then use cached tools offline, although a cleared browser cache, an update or private browsing may require another connection.",
     },
     {
       question: "Will compression change image quality?",

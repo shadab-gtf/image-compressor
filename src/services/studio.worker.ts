@@ -26,7 +26,7 @@ function canvas2d(width: number, height: number) {
 
 function validateSize(width: number, height: number): void {
   if (width < 1 || height < 1 || width > MAX_EDGE || height > MAX_EDGE || width * height > MAX_PIXELS) {
-    throw new Error("Choose an image up to 24 megapixels and 8,192 pixels per side. A 2× export must also fit these limits.");
+    throw new Error("Choose an image up to 24 megapixels and 8,192 pixels per side. The enlarged export must also fit these limits; choose a lower scale or a smaller source.");
   }
 }
 
@@ -169,17 +169,28 @@ async function portraitMatte(bitmap: ImageBitmap): Promise<OffscreenCanvas> {
 
 async function processImage(request: Extract<StudioRequest, { type: "process" }>, bitmap: ImageBitmap): Promise<StudioImage> {
   const settings: StudioSettings = request.settings;
-  const scale = request.mode === "enhance-image" && settings.scale === 2 ? 2 : 1;
+  const scale = request.mode === "enhance-image" ? settings.scale : 1;
   const width = bitmap.width * scale;
   const height = bitmap.height * scale;
   validateSize(width, height);
+  if (request.mode === "enhance-image" && settings.enhancement === "ai" && bitmap.width * bitmap.height > 1_000_000) {
+    throw new Error("Real-ESRGAN accepts up to 1 megapixel here. Resize your photo first, or choose Quick adjustments for larger images.");
+  }
   const output = canvas2d(width, height);
   output.context.imageSmoothingEnabled = true;
   output.context.imageSmoothingQuality = "high";
   output.context.drawImage(bitmap, 0, 0, width, height);
+  if (request.mode === "enhance-image" && settings.enhancement === "ai") {
+    const { restorePhoto } = await import("./studio-neural");
+    const restored = await restorePhoto(bitmap, scale, progress);
+    output.context.clearRect(0, 0, width, height);
+    output.context.drawImage(restored, 0, 0);
+    restored.width = restored.height = 1;
+  }
 
-  if (request.mode === "remove-background" && settings.method === "portrait") {
-    const mask = await portraitMatte(bitmap);
+  if (request.mode === "remove-background" && settings.method !== "solid") {
+    const mask = settings.method === "portrait" ? await portraitMatte(bitmap)
+      : await (await import("./studio-neural")).objectMatte(bitmap, progress);
     progress(0.86, "Applying the soft alpha mask at original resolution");
     output.context.globalCompositeOperation = "destination-in";
     output.context.drawImage(mask, 0, 0, width, height);
@@ -187,7 +198,7 @@ async function processImage(request: Extract<StudioRequest, { type: "process" }>
     mask.width = 1;
     mask.height = 1;
   } else {
-    progress(0.35, request.mode === "enhance-image" ? "Refining color, contrast and detail" : "Removing the connected background");
+    progress(request.mode === "enhance-image" && settings.enhancement === "ai" ? 0.88 : 0.35, request.mode === "enhance-image" ? "Refining color, contrast and detail" : "Removing the connected background");
     const pixels = output.context.getImageData(0, 0, width, height);
     const result = request.mode === "enhance-image"
       ? enhancePixels(pixels.data, width, height, settings)

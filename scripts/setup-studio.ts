@@ -5,6 +5,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+await import("./setup-neural.ts");
 const modelRevision = "fa2fa546052fba4c08921230a26cc69a333fca12";
 const runtimeVersion = "1.30.0";
 const sha256 = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");

@@ -24,7 +24,7 @@ export const SITE = {
   name: "ShrinkFox",
   tagline: "Your images. Your device. Your toolkit.",
   description:
-    "Free image tools to compress, resize and convert photos, remove backgrounds and adjust color. " +
+    "Free image tools to compress, resize and convert photos, remove backgrounds and upscale with AI. " +
     "Work in your browser without uploads, signup or added watermarks.",
   url: siteUrl.origin,
   indexable: isPublicOrigin,

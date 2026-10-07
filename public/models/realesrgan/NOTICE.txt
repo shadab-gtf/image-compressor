@@ -1,0 +1,5 @@
+Real-ESRGAN General x4v3 · BSD-3-Clause · Copyright 2021 Xintao Wang.
+Original: https://github.com/xinntao/Real-ESRGAN
+ONNX export: Qualcomm AI Hub v0.64.0, float, 128×128 input / 512×512 output.
+https://huggingface.co/qualcomm/Real-ESRGAN-General-x4v3
+Export bytes are redistributed unmodified; see LICENSE.

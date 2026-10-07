@@ -143,7 +143,7 @@ try {
   await until("enhancement UI", () => evaluate("!!document.querySelector('select') && !!document.querySelector('input[type=file]')"));
   await delay(800);
   await uploadSynthetic();
-  await evaluate("(() => { const select = document.querySelector('select'); select.value = '2'; select.dispatchEvent(new Event('change', { bubbles: true })); })()");
+  await evaluate("(() => { const select = document.querySelector('select[id$=scale]'); select.value = '2'; select.dispatchEvent(new Event('change', { bubbles: true })); })()");
   await click("Enhance image");
   await until("enhancement result", () => evaluate("!!document.querySelector('a[download]') && !document.querySelector('[role=progressbar]')"));
   const enhanced = await resultPixels();

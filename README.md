@@ -1,6 +1,6 @@
 # ShrinkFox
 
-A free image toolkit with private, on-device processing. Built with Next.js 16.4, React, TypeScript, browser workers and a self-hosted portrait-matting model.
+A free image toolkit with private, on-device processing. Built with Next.js 16.4, React, TypeScript, browser workers and self-hosted Real-ESRGAN, BiRefNet Lite and MODNet models.
 
 ## Run locally
 
@@ -12,7 +12,7 @@ npm run setup:studio
 npm run dev
 ```
 
-`setup:studio` downloads a pinned MODNet model, copies the pinned ONNX Runtime Web files and verifies SHA-256 checksums. These assets are served from your own origin. No model API key, account or per-image credits are required. Re-running setup verifies existing files without downloading them again.
+`setup:studio` installs pinned Real-ESRGAN General x4v3, BiRefNet Lite 512 and MODNet exports, copies ONNX Runtime Web files and verifies SHA-256 checksums. These assets are served from your own origin. No model API key, account or per-image credits are required. Re-running setup verifies existing files without downloading them again.
 
 ## Production
 
@@ -32,8 +32,8 @@ Use a Next.js-compatible Node host with HTTPS. Preserve the security headers in 
 - Proportional resize, exact dimensions, contain, cover/crop and batch presets.
 - Conversion to browser-supported encoders, with actual output MIME verification.
 - Folder/batch processing, cancellable workers, image comparison and ZIP downloads.
-- Local MODNet portrait background removal; edge-connected simple-background removal for plain product backdrops.
-- Contrast, saturation, sharpening and optional 2× smooth interpolation. Enhancement is not generative restoration.
+- Local BiRefNet Lite for general subjects, MODNet for portraits and simple-background removal for plain backdrops.
+- Real-ESRGAN restoration with 2×, 3× and 4× exports; color/sharpening controls and Quick adjustments for larger photos.
 - Responsive landing page with a real before/after compression example, tool pages, format guide, privacy explanation, titles, descriptions, social preview, structured data, sitemap and robots.
 - Installable PWA, skeleton loading, route error boundaries, keyboard navigation and reduced-motion styles.
 
@@ -45,7 +45,7 @@ The landing example is an AI-generated still-life photo. Its displayed sizes com
 
 Interactive tool features live under `src/features`. Stateless shared presentation lives under `src/components/ui`. File operations go through typed services and disposable or bounded workers. Model loading happens inside the studio worker, never in a page or presentation component. Suspense and route skeletons cover asynchronous rendering and lazy studio code.
 
-The AI runtime is dynamically imported only for portrait processing. Source images and output blobs remain in memory; model/site caches contain public assets only. Navigating away cancels active work. Download results before refreshing or closing the workspace.
+The AI runtime is dynamically imported only for AI processing. Source images and output blobs remain in memory; model/site caches contain public assets only. Navigating away cancels active work. Download results before refreshing or closing the workspace.
 
 ## Limits and quality
 
@@ -56,10 +56,12 @@ There is no application subscription, daily quota or credit meter. This does not
 | Compressor | 128 MiB input, 40 MP, 16,384px maximum edge |
 | Studio | 40 MiB input, 24 MP, 8,192px maximum edge; resized output must also fit |
 | Portrait AI | About 26 MB model plus about 14 MB runtime downloaded on demand |
+| BiRefNet Lite | About 192 MB model data plus shared runtime; needs substantial device memory |
+| Real-ESRGAN General | 1 MP input; about 5 MB model data plus shared runtime; padded tile processing |
 
 JPEG and PNG are the most portable formats. WebP and AVIF depend on actual browser support. AVIF decoding does not imply AVIF encoding. Animated GIF, WebP, APNG and AVIF inputs export a still frame. TIFF support is limited by the browser. HEIC, RAW, PDF, SVG and JPEG XL are not supported.
 
-Portrait AI specializes in people. It is not a general product segmentation model. Fine hair, transparent materials, similar foreground/background colors and complex scenes can need manual cleanup. Simple-background mode is useful for plain edge-connected backgrounds, not complex scenes. 2× interpolation increases dimensions, not recovered detail.
+BiRefNet Lite handles general subjects using a 512×512 mask prediction resized to the source resolution. Portrait AI specializes in people and uses a smaller model. Fine hair, transparent materials and complex scenes can need manual cleanup. Real-ESRGAN predicts plausible detail rather than recovering the exact original; check faces and text. Quick adjustments enlarges with interpolation. See [IMAGE-ENHANCEMENT.md](IMAGE-ENHANCEMENT.md) for models, licenses and planned improvements.
 
 Lossless mode forces PNG. Resizing and palette reduction still alter pixels. Target-size mode can return the closest result when a requested size is impossible. Color profiles, print metadata and HDR content may change during browser conversion.
 
@@ -75,6 +77,7 @@ npm run test:images
 npm run e2e
 npm run e2e:studio
 npm run test:site
+node --experimental-strip-types scripts/test-neural-browser.ts
 ```
 
 Engine tests cover oversized-header rejection before decode, format fallback, true lossless output, EXIF privacy, ZIP integrity/naming and cancellation races. Studio tests check pixel values, transparency, real model inference, actual PNG downloads and cancellation. Site checks cover routes, metadata, icons, mobile layout, install guidance and offline behavior. Browser checks require Chrome/Edge; the Playwright site test supports `CHROME_PATH` or an installed Playwright Chromium. Use `E2E_BASE` to target a running server; site/PWA checks require a production server, default port 3100.
@@ -94,6 +97,8 @@ Each tool has its own instructions and practical format or quality guidance, inc
 ## Free resources and licensing
 
 - [MODNet source and Apache-2.0 license](https://github.com/ZHKKKe/MODNet): portrait matting.
+- [Real-ESRGAN and BSD-3-Clause license](https://github.com/xinntao/Real-ESRGAN): compact General x4v3 restoration model.
+- [BiRefNet and MIT license](https://github.com/ZhengPeng7/BiRefNet): Lite 512 browser export for general subjects.
 - [Pinned Xenova MODNet export](https://huggingface.co/Xenova/modnet/tree/fa2fa546052fba4c08921230a26cc69a333fca12): ONNX model.
 - [ONNX Runtime](https://github.com/microsoft/onnxruntime): MIT runtime; bundled notices are retained under `public/wasm`.
 - [Browser canvas encoding](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas/convertToBlob): local image export without a server API.
