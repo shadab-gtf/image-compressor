@@ -43,3 +43,16 @@ Free local inference removes per-image server charges. Device memory, GPU perfor
 Real-ESRGAN uses BSD-3-Clause; the selected BiRefNet Lite export uses MIT. Preserve LICENSE and NOTICE files under public/models. Bria RMBG-2.0 is not included because its non-commercial terms do not meet the commercial-use requirement. The intermediate TensorFlow/UpscalerJS dependencies were removed in favor of the existing ONNX worker runtime.
 
 Run `node --experimental-strip-types scripts/test-neural-browser.ts` against the production preview to check 2×–4× dimensions, transparency, actual neural output, cancellation, original-resolution background masks, mobile layout and same-origin requests.
+
+## Additional project review — 7 October 2026
+
+No additional package was installed after reviewing these projects. The current browser worker already supplies restoration and background removal through ONNX Runtime, Real-ESRGAN and BiRefNet.
+
+| Project | Integration available | Decision for ShrinkFox |
+| --- | --- | --- |
+| [Upscayl](https://github.com/upscayl/upscayl) | Electron desktop application with native Vulkan processing; AGPL-3.0 application | No browser SDK to add. Keep the existing Real-ESRGAN ONNX implementation. Consider native GPU processing if building a separate desktop edition. |
+| [Unbagrnd](https://github.com/zidniryi/unbagrnd) | Tauri application, Rust processing core and self-hosted Axum API | Its native core cannot be imported into the browser as a JavaScript inference library. A separate server would introduce hosting and photo uploads. Keep local BiRefNet; use its brush refinement and background editing workflows as product ideas. |
+| [rembg](https://github.com/danielgatis/rembg) | Installable Python library, CLI and HTTP server | A usable library exists, but requires a Python runtime and overlaps the existing browser ONNX pipeline. Install only for a future explicit Python backend or desktop processing service. |
+| [Clarity Upscaler](https://github.com/philz1337x/clarity-upscaler) | GPU/Python Cog implementation; free ComfyUI/A1111 workflows; separate paid app/API | No compatible browser SDK. Its diffusion workflow invents detail and needs large model files and GPU resources. Reserve a clearly labeled creative mode for a future local GPU or separately funded backend. The repository says Flux upscaling is not open source. |
+
+Installation criteria: add a dependency only when it runs in the chosen environment, adds a tested capability, has acceptable model and code licenses, and preserves the chosen privacy/cost model. Installing a desktop application's source does not make its native inference available inside a website.

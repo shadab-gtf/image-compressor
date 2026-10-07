@@ -1,6 +1,31 @@
 # ShrinkFox product and growth roadmap
 
-Prepared 7 October 2026. These are proposed improvements, not features currently available or promises of market leadership.
+Updated 7 October 2026. The implementation status below separates available features from future expansion and release checks. This is not a promise of market leadership.
+
+## Implementation status
+
+| Order | Implemented in this release | Remaining validation or expansion |
+| --- | --- | --- |
+| 1 | Erase/restore mask editor, reversible stroke history, undo/redo, brush size, opacity/hardness, pen pressure, pointer capture, zoom and pan | Physical pen/tablet and Android/iPhone checks; broader hair/glass quality fixtures |
+| 2 | Transparent, solid, gradient and uploaded-image backgrounds; shared preview/export compositing; original-resolution PNG | Additional difficult-edge evaluations; background lighting and colour decontamination are future work |
+| 3 | `/crop-image`: draggable corners and selection, common aspect ratios, keyboard arrows/Shift, rule-of-thirds grid, 90° rotation and ±15° straightening | Physical-device checks; straightening intentionally leaves transparent corners |
+| 4 | `/export-recipes`: editable product/social/website recipes, named variants, individual failure reports, cancellation and ZIP download | Currently one source photo per recipe; up to 20 variants and 128 MiB of output. Batch recipes and user-defined recipe backups can follow |
+| 5 | Settings-only local presets, apply/save/delete/delete-all, JSON backup/import, nested schema validation and storage explanations | Browser storage is local and can be cleared; cloud sync is not provided |
+| 6 | Optional, lazy, self-hosted MozJPEG and libwebp WASM encoders through pinned jSquash packages; notices and browser fallback choice | 12 MP advanced-encoder cap. AVIF WASM and comparative physical-phone memory/quality benchmarks remain future work |
+| 7 | Existing BiRefNet Lite general remover with WASM CPU execution, portrait/plain-background alternatives and disclosed download budget | Expanded representative product/animal/hair/glass comparisons |
+| 8 | Existing Real-ESRGAN restoration with 2×/3×/4×, tiled execution, cancellation, comparison and input caps | Physical-device performance matrix; severe blur and unreadable text cannot be guaranteed recoverable |
+| 9 | Original bounded TIFF 6.0 reader: single-page, uncompressed, chunky 8-bit RGB/grayscale, orientations 1–8 and alpha | ICC-tagged, compressed/tiled, CMYK, high-bit-depth and BigTIFF are rejected. HEIC/RAW/JXL/PDF/SVG need separate adapter and license reviews |
+| 10 | Pixel-based memory estimates before worker scheduling, isolated errors/retries, serial recipe workers and streamed ZIP to a chosen disk file where supported | File System Access is browser dependent; regular download fallback remains. Large physical-device soak tests are pending |
+
+Four server-rendered guides now cover image formats, upload limits, product photos and transparency. They link to relevant tools and are included in public route, metadata, sitemap and offline handling. Saved settings are covered in the privacy page. No analytics or image persistence was added.
+
+Downloads preserve the source basename unless a custom rename pattern is supplied: selecting or dropping `xyz.png` produces `xyz.webp` for WebP and `xyz.jpg` for JPEG. The browser regression test checks both selection and drag-and-drop download names.
+
+Run `npm run check`, `npm run test:roadmap`, `npm run test:seo` and `npm run test:pwa` against a production build. The roadmap browser test verifies downloaded mask pixels, reversible corrections, backgrounds, crop geometry, recipe archives, preset persistence, JPEG/WebP WASM exports, a real TIFF fixture with all orientations/partial alpha, and narrow viewport overflow. Emulation does not substitute for physical phone testing.
+
+Production deployment, domain ownership, Search Console verification, real search performance and physical-device benchmarks remain external release work. `https://shrinkfox.vercel.app` is still a proposed address; indexing stays disabled until `NEXT_PUBLIC_SITE_URL` is configured for a verified deployment. Follow [SEO-LAUNCH-GUIDE.md](SEO-LAUNCH-GUIDE.md).
+
+The GIMP/digiKam/ComfyUI references are workflow inspiration. This release implements browser controls and local workers; it does not install or bundle those desktop applications. The codecs use [jSquash](https://github.com/jamsinclair/jSquash), and the TIFF implementation follows [the TIFF tag specification](https://www.loc.gov/preservation/digital/formats/content/tiff_tags.shtml).
 
 ## What to compete on
 

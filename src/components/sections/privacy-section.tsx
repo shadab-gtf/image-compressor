@@ -25,7 +25,7 @@ export function PrivacySection() {
             ],
             [
               "What is saved for next time",
-              "ShrinkFox remembers your theme and whether you dismissed the install prompt. Your browser can also save website files and AI models for repeat visits and offline use. Your images and edited results are not part of this offline cache. Private browsing, low storage or clearing site data can remove saved website files.",
+              "ShrinkFox remembers your theme and whether you dismissed the install prompt. Presets you save contain image settings and names, never your photos. You can export, import or delete them in Settings. Your browser can also cache website files, encoders and AI models for offline use. Images and edited results are not part of this cache. Private browsing, low storage or clearing site data can remove saved settings and website files.",
             ],
             [
               "Details stored inside photos",

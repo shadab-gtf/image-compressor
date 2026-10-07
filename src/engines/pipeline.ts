@@ -119,8 +119,9 @@ export async function processImage(
   // bitmap is already upright and every downstream dimension is the real one.
   let bitmap: ImageBitmap;
   try {
-    bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    bitmap = format === "tiff" ? await (await import("./tiff")).decodeTiff(file) : await createImageBitmap(file, { imageOrientation: "from-image" });
   } catch (cause) {
+    if (format === "tiff" && cause instanceof Error) throw cause;
     throw new Error(`DECODE_FAILED: ${String(cause)}`);
   }
   onProgress?.(0.35);
@@ -141,7 +142,7 @@ export async function processImage(
     const sourceHasAlpha = SUPPORTS_ALPHA[format];
     const outputFormat = resolveOutputFormat(format, options, support, sourceHasAlpha);
 
-    if (!support.encode[outputFormat]) {
+    if (!support.encode[outputFormat] && !(options.output.encoder === "wasm" && (outputFormat === "jpeg" || outputFormat === "webp"))) {
       throw new Error(`ENCODE_UNSUPPORTED:${outputFormat}`);
     }
 
@@ -176,6 +177,7 @@ export async function processImage(
           allowDownscale: compression.allowDownscaleForTarget,
           tolerance: 0,
           signal,
+          encoder: options.output.encoder,
         },
       );
       blob = search.blob;
@@ -206,7 +208,7 @@ export async function processImage(
         applyPngQuantisation(canvas, colors);
       }
       try {
-        blob = await encodeCanvas(canvas, outputFormat, chosenQuality);
+        blob = await encodeCanvas(canvas, outputFormat, chosenQuality, options.output.encoder);
       } finally {
         canvas.width = 1;
         canvas.height = 1;

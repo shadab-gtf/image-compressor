@@ -1,9 +1,11 @@
 import type { Dimensions, ImageFormat } from "@/types/image";
+import { tiffHeader } from "./tiff";
 
 /** Bounded metadata read; no pixel decoder is invoked during this preflight. */
 export const HEADER_BYTES = 1_048_576;
 
 export function readHeaderDimensions(bytes: Uint8Array, format: ImageFormat): Dimensions | null {
+  if (format === "tiff") { try { const { width, height } = tiffHeader(bytes); return { width, height }; } catch { return null; } }
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const text = (at: number, count: number) =>
     String.fromCharCode(...bytes.subarray(at, at + count));

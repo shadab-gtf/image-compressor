@@ -2,7 +2,7 @@
 
 import { formatBytes, savingsPercent } from "@/lib/bytes";
 import { baseName, withExtension } from "@/lib/format";
-import { createZip, deflateText, uniqueNames, type ZipEntry } from "@/lib/zip";
+import { createZip, streamZip, deflateText, uniqueNames, type ZipEntry } from "@/lib/zip";
 import { EXTENSION_BY_FORMAT, FORMAT_LABEL } from "@/types/image";
 import type { ImageJob } from "@/types/job";
 
@@ -15,10 +15,13 @@ import type { ImageJob } from "@/types/job";
 
 /** Triggers a browser download and releases the object URL afterwards. */
 export function saveBlob(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
+  const name = uniqueNames([filename])[0]!;
+  // Keep the name on both the File and anchor, including browser download bridges.
+  const file = new File([blob], name, { type: blob.type || "application/octet-stream" });
+  const url = URL.createObjectURL(file);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = uniqueNames([filename])[0]!;
+  anchor.download = name;
   anchor.rel = "noopener";
   document.body.append(anchor);
   anchor.click();
@@ -145,6 +148,7 @@ export type ZipOptions = {
   includeManifest?: boolean;
   archiveName?: string;
   onProgress?: (done: number, total: number) => void;
+  streamToDisk?: boolean;
 };
 
 export async function downloadZip(jobs: ImageJob[], options: ZipOptions = {}): Promise<void> {
@@ -168,6 +172,18 @@ export async function downloadZip(jobs: ImageJob[], options: ZipOptions = {}): P
     });
   }
 
+  const picker = (window as unknown as { showSaveFilePicker?: (options: { suggestedName: string; types: { description: string; accept: Record<string, string[]> }[] }) => Promise<{ createWritable: () => Promise<FileSystemWritableFileStream> }> }).showSaveFilePicker;
+  if (options.streamToDisk && picker) {
+    let writable: FileSystemWritableFileStream | undefined;
+    try {
+      const handle = await picker.call(window, { suggestedName: options.archiveName ?? defaultArchiveName(completed), types: [{ description: "ZIP archive", accept: { "application/zip": [".zip"] } }] });
+      writable = await handle.createWritable();
+      const destination = writable;
+      await streamZip(entries, { write: async (chunk) => destination.write(chunk) }, options.onProgress);
+      await writable.close();
+    } catch (cause) { if (writable) await writable.abort().catch(() => {}); if (cause instanceof DOMException && cause.name === "AbortError") return; throw cause; }
+    return;
+  }
   const zip = await createZip(entries, options.onProgress);
   saveBlob(zip, options.archiveName ?? defaultArchiveName(completed));
 }

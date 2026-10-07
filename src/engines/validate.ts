@@ -179,6 +179,7 @@ export function toProcessingError(cause: unknown): ProcessingError {
       retryable: true,
     };
   }
+  if (/TIFF|advanced encoder|selected encoder/.test(text)) return { code: "DECODE_UNSUPPORTED", message: text.slice(0, 240), retryable: false, hint: "Choose a compatible PNG/JPEG source, smaller output, or the browser encoder as appropriate." };
 
   // Chrome and Firefox word allocation failures differently; both show up here
   // when a batch of very large images runs the tab out of memory.

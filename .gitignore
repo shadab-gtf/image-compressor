@@ -51,5 +51,6 @@ next-env.d.ts
 /temp/birefnet-result.png
 /public/wasm/*.wasm
 /public/wasm/*.mjs
+/public/codecs/*.wasm
 /public/sw.js
 !/.env.example

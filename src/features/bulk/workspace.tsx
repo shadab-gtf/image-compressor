@@ -123,7 +123,7 @@ export function Workspace() {
       : (counts.done + counts.failed + counts.cancelled) / counts.total;
 
   const onDownloadZip = useCallback(
-    async (which: "all" | "selected") => {
+    async (which: "all" | "selected", streamToDisk = false) => {
       if (archiveBusy.current) return;
       const batch =
         which === "all" ? completed : selected.filter((j) => j.result);
@@ -134,6 +134,7 @@ export function Workspace() {
       try {
         await downloadZip(batch, {
           pattern: renamePattern,
+          streamToDisk,
           onProgress: (done, total) => setZipping({ done, total }),
         });
       } catch (cause) {
@@ -322,6 +323,7 @@ export function Workspace() {
                     >
                       Download ZIP
                     </Button>
+                    <Button variant="secondary" disabled={zipping !== null} onClick={() => void onDownloadZip("all", true)} iconLeft={<DoodleIcon name="archive" size={18} />}>Save ZIP to disk</Button>
                   </>
                 )}
               </div>

@@ -101,6 +101,16 @@ export async function createZip(
   entries: ZipEntry[],
   onProgress?: (done: number, total: number) => void,
 ): Promise<Blob> {
+  return buildZip(entries, onProgress);
+}
+
+export interface ZipSink { write: (chunk: Blob | Uint8Array<ArrayBuffer> | ArrayBuffer) => Promise<void> }
+/** Write each header and source blob directly, retaining only the small central directory. */
+export async function streamZip(entries: ZipEntry[], sink: ZipSink, onProgress?: (done: number, total: number) => void): Promise<void> {
+  await buildZip(entries, onProgress, sink);
+}
+
+async function buildZip(entries: ZipEntry[], onProgress?: (done: number, total: number) => void, sink?: ZipSink): Promise<Blob> {
   if (entries.length > ZIP_LIMITS.maxEntries) {
     throw new Error(
       `A single ZIP can hold ${ZIP_LIMITS.maxEntries} files; this batch has ${entries.length}.`,
@@ -144,7 +154,8 @@ export async function createZip(
     local.setUint16(26, nameBytes.length, true);
     local.setUint16(28, 0, true); // extra field length
 
-    parts.push(local.buffer, nameBytes, entry.data);
+    if (sink) { await sink.write(local.buffer); await sink.write(nameBytes); await sink.write(entry.data); }
+    else parts.push(local.buffer, nameBytes, entry.data);
 
     const dir = new DataView(new ArrayBuffer(46));
     dir.setUint32(0, 0x02014b50, true); // central directory signature
@@ -184,6 +195,7 @@ export async function createZip(
   end.setUint32(12, centralSize, true);
   end.setUint32(16, offset, true);
 
+  if (sink) { for (const record of central) await sink.write(record); await sink.write(end.buffer); return new Blob([], { type: "application/zip" }); }
   return new Blob([...parts, ...central, end.buffer], { type: "application/zip" });
 }
 

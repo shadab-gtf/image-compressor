@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import {
   useId,
   useLayoutEffect,
@@ -14,6 +15,9 @@ import { DoodleIcon } from "@/components/ui/doodle-icon";
 import { formatBytes } from "@/lib/bytes";
 import { cn } from "@/lib/cn";
 import { runStudioOperation } from "@/services/studio-service";
+import { DEFAULT_CROP } from "@/types/editor";
+import { withExtension } from "@/lib/format";
+import { uniqueNames } from "@/lib/zip";
 import {
   DEFAULT_STUDIO_SETTINGS,
   type StudioImage,
@@ -32,6 +36,9 @@ interface StudioResult extends StudioImage {
   settingsKey: string;
 }
 
+const CutoutEditor = dynamic(() => import("./cutout-editor").then((module) => module.CutoutEditor), { loading: () => <div className="h-64 animate-pulse rounded-3xl bg-surface-3" aria-label="Loading cutout editor" /> });
+const CropEditor = dynamic(() => import("./crop-editor").then((module) => module.CropEditor), { loading: () => <div className="h-64 animate-pulse rounded-3xl bg-surface-3" aria-label="Loading crop editor" /> });
+
 const checkerboard = {
   backgroundColor: "var(--sf-surface)",
   backgroundImage:
@@ -42,6 +49,8 @@ const checkerboard = {
 export function ImageStudio({ mode }: { mode: StudioMode }) {
   const [source, setSource] = useState<LoadedImage | null>(null);
   const [result, setResult] = useState<StudioResult | null>(null);
+  const [baseCutout, setBaseCutout] = useState<StudioImage | null>(null);
+  const [editing, setEditing] = useState(false);
   const [settings, setSettings] = useState<StudioSettings>(
     DEFAULT_STUDIO_SETTINGS,
   );
@@ -57,6 +66,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
   const urls = useRef<string[]>([]);
   const id = useId();
   const removal = mode === "remove-background";
+  const cropping = mode === "crop-image";
   const busy = progress !== null;
   const settingsKey = JSON.stringify(settings);
   const stale = result !== null && result.settingsKey !== settingsKey;
@@ -72,6 +82,8 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
       urls.current = [];
       setSource(null);
       setResult(null);
+      setBaseCutout(null);
+      setEditing(false);
       setProgress(null);
       setError(null);
       setNotice(null);
@@ -87,8 +99,8 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
     urls.current = urls.current.filter((item) => item !== url);
   }
 
-  function createUrl(blob: Blob) {
-    const url = URL.createObjectURL(blob);
+  function createUrl(blob: Blob, filename?: string) {
+    const url = URL.createObjectURL(filename ? new File([blob], uniqueNames([filename])[0]!, { type: blob.type }) : blob);
     urls.current.push(url);
     return url;
   }
@@ -112,6 +124,8 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
       releaseUrl(result?.url);
       setSource({ ...image, file, url: createUrl(image.blob) });
       setResult(null);
+      setBaseCutout(null);
+      setEditing(false);
       setPosition(50);
     } catch (cause) {
       if (!controller.signal.aborted)
@@ -143,7 +157,8 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
       );
       if (controller.signal.aborted) return;
       releaseUrl(result?.url);
-      setResult({ ...image, url: createUrl(image.blob), settingsKey });
+      setResult({ ...image, url: createUrl(image.blob, withExtension(source.file.name, "png")), settingsKey });
+      if (removal) { setBaseCutout(image); setEditing(false); }
       setPosition(50);
       setNotice(
         "Your image is ready. Compare the result and download your PNG.",
@@ -242,7 +257,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
             ref={input}
             id={`${id}-file`}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/bmp,.jpg,.jpeg,.png,.webp,.avif,.gif,.bmp"
+            accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/bmp,image/tiff,.jpg,.jpeg,.png,.webp,.avif,.gif,.bmp,.tif,.tiff"
             className="sr-only"
             tabIndex={-1}
             aria-label="Choose an image to edit"
@@ -295,6 +310,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
                       result
                         ? removal
                           ? "Your image with its background removed"
+                          : cropping ? "Your cropped and rotated image"
                           : "Your enhanced image"
                         : "Original image preview"
                     }
@@ -433,6 +449,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
               <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
                 {removal
                   ? "A cleaner background, in a few clicks."
+                  : cropping ? "Frame your subject, straighten the photo and save the part you need."
                   : "Adjust the color, contrast and sharpness, then compare the result."}
               </p>
               <Button
@@ -446,7 +463,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
               </Button>
               <p className="mt-3 text-xs leading-relaxed text-muted">
                 <span className="hidden sm:inline">or drop it here · </span>JPG,
-                PNG, WebP, AVIF, GIF, BMP
+                PNG, WebP, AVIF, GIF, BMP · limited TIFF
                 <br />
                 Up to 40 MB / 24 MP
               </p>
@@ -461,7 +478,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
       >
         <div className="flex min-h-8 items-center justify-between gap-3">
           <h2 className="text-base font-semibold text-ink">
-            {removal ? "Background settings" : "Image adjustments"}
+            {removal ? "Background settings" : cropping ? "Crop settings" : "Image adjustments"}
           </h2>
           {!removal && (
             <button
@@ -543,6 +560,8 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
               </p>
             )}
           </fieldset>
+        ) : cropping ? (
+          <p className="text-sm leading-6 text-muted">Choose an aspect ratio, drag the crop corners, then rotate or straighten your image. Save the result as a PNG. Your original stays untouched.</p>
         ) : (
           <fieldset disabled={busy} className="space-y-3">
             <legend className="sr-only">Enhancement controls</legend>
@@ -623,6 +642,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
             <p>
               {removal
                 ? "Use BiRefNet AI for products, people and general subjects. Portrait AI uses a smaller model for people. Simple background needs no AI download. Check hair, glass and fine edges before downloading; difficult cutouts may need manual editing."
+                : cropping ? "Selection dimensions refer to the original photo. Rotation happens after cropping. Transparent corners from straightening remain transparent in PNG. Output must fit 24 megapixels and 8,192 pixels per side."
                 : "Try 2× first for a natural result. AI predicts detail, so check faces, text and textures before downloading. It cannot guarantee recovery of severe motion blur or unreadable text. AI input is limited to 1 megapixel; Quick adjustments supports larger images. All exports must fit 24 megapixels and 8,192 pixels per side."}
             </p>
             <p>
@@ -752,12 +772,12 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
               }
             }}
           >
-            {busy ? "Cancel" : removal ? "Remove background" : "Enhance image"}
+            {busy ? "Cancel" : removal ? "Remove background" : cropping ? "Apply crop" : "Enhance image"}
           </Button>
           {result && (
             <a
               href={result.url}
-              download={`${source?.file.name.replace(/\.[^.]+$/, "") ?? "image"}-${removal ? "cutout" : "enhanced"}.png`}
+              download={uniqueNames([withExtension(source?.file.name ?? "image", "png")])[0]}
               className="group inline-flex min-h-12 min-w-0 items-center justify-center gap-1.5 rounded-full border border-accent-deep/20 bg-accent px-2 text-xs font-semibold text-on-accent shadow-accent hover:bg-accent-hover motion-safe:transition-[background-color,transform,box-shadow] motion-safe:duration-150 motion-safe:active:scale-[.98] sm:gap-2 sm:px-5 sm:text-sm"
             >
               <DoodleIcon name="download" size={19} />
@@ -766,6 +786,15 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
           )}
         </div>
       </div>
+      {removal && source && baseCutout && <div className="col-span-full px-4 pb-6 sm:px-6">
+        {!editing && <Button variant="secondary" iconLeft={<DoodleIcon name="sliders" size={20} />} onClick={() => setEditing(true)}>Refine edges & change background</Button>}
+        {editing && <CutoutEditor key={source.url + baseCutout.blob.size} file={source.file} preview={source.blob} cutout={baseCutout} onApply={(image) => {
+          releaseUrl(result?.url);
+          setResult({ ...image, url: createUrl(image.blob, withExtension(source.file.name, "png")), settingsKey });
+          setNotice("Your edited cutout is ready to download.");
+        }} />}
+      </div>}
+      {cropping && source && <div className="col-span-full overflow-hidden border-t border-line p-6"><CropEditor url={source.url} width={source.width} height={source.height} value={settings.crop ?? DEFAULT_CROP} onChange={(value) => changeSetting("crop", value)} /></div>}
     </div>
   );
 }

@@ -22,7 +22,7 @@ export type CodecSupport = {
 };
 
 /** 1x1 samples, the smallest valid file each format admits. */
-const SAMPLES: Record<ImageFormat, string> = {
+const SAMPLES: Record<Exclude<ImageFormat, "tiff">, string> = {
   jpeg:
     "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0a" +
     "HBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAA" +
@@ -48,6 +48,7 @@ function base64ToBlob(data: string, mime: string): Blob {
 }
 
 async function canDecode(format: ImageFormat): Promise<boolean> {
+  if (format === "tiff") return true;
   try {
     const blob = base64ToBlob(SAMPLES[format], MIME_BY_FORMAT[format]);
     const bitmap = await createImageBitmap(blob);

@@ -2,6 +2,8 @@ import type { CodecSupport } from "@/codecs/capabilities";
 import type { ProcessingError, ImageInput, ProcessingResult } from "@/types/job";
 import type { ProcessingOptions } from "@/types/options";
 import type { WorkerRequest, WorkerResponse } from "@/types/worker";
+import { HEADER_BYTES, readHeaderDimensions } from "@/engines/header";
+import { sniffFormat } from "@/lib/format";
 
 /**
  * Worker pool and scheduler.
@@ -17,6 +19,7 @@ export type PoolTask = {
   file: File;
   name: string;
   options: ProcessingOptions;
+  estimatedMemory?: number;
 };
 
 export type PoolHandlers = {
@@ -56,6 +59,7 @@ export function chooseConcurrency(averageBytes: number, queued: number): number 
 type Slot = {
   worker: Worker;
   busy: string | null;
+  memory: number;
 };
 
 export class WorkerPool {
@@ -65,6 +69,8 @@ export class WorkerPool {
   private disposed = false;
   private concurrency = 2;
   private support: Promise<CodecSupport> | null = null;
+  private preparing = new Set<string>();
+  private readonly memoryBudget = typeof navigator !== "undefined" && "deviceMemory" in navigator && Number(navigator.deviceMemory) > 4 ? 384_000_000 : 192_000_000;
 
   constructor(private readonly handlers: PoolHandlers) {}
 
@@ -75,7 +81,7 @@ export class WorkerPool {
       type: "module",
       name: "shrinkfox-image",
     });
-    const slot: Slot = { worker, busy: null };
+    const slot: Slot = { worker, busy: null, memory: 0 };
 
     worker.addEventListener("message", (event: MessageEvent<WorkerResponse>) => {
       const message = event.data;
@@ -87,11 +93,13 @@ export class WorkerPool {
           break;
         case "done":
           slot.busy = null;
+          slot.memory = 0;
           this.handlers.onDone(message.id, message.input, message.result);
           this.pump();
           break;
         case "failed":
           slot.busy = null;
+          slot.memory = 0;
           this.handlers.onFailed(message.id, message.error);
           this.pump();
           break;
@@ -158,6 +166,17 @@ export class WorkerPool {
   enqueue(tasks: PoolTask[]) {
     if (this.disposed || tasks.length === 0) return;
     this.queue.push(...tasks);
+    for (const task of tasks) {
+      this.preparing.add(task.id);
+      void task.file.slice(0, HEADER_BYTES).arrayBuffer().then((buffer) => {
+        const bytes = new Uint8Array(buffer); const format = sniffFormat(bytes);
+        const dimensions = format ? readHeaderDimensions(bytes, format) : null;
+        const sourcePixels = dimensions ? dimensions.width * dimensions.height : 40_000_000;
+        const targetPixels = (task.options.resize.width ?? dimensions?.width ?? 8192) * (task.options.resize.height ?? dimensions?.height ?? 8192);
+        // Source, destination and scratch/encoding buffers; compressed bytes alone are misleading.
+        task.estimatedMemory = Math.max(sourcePixels, targetPixels) * 16 + task.file.size;
+      }).catch(() => { task.estimatedMemory = 640_000_000; }).finally(() => { this.preparing.delete(task.id); this.pump(); });
+    }
 
     const totalBytes = this.queue.reduce((sum, task) => sum + task.file.size, 0);
     this.concurrency = chooseConcurrency(totalBytes / this.queue.length, this.queue.length);
@@ -177,6 +196,7 @@ export class WorkerPool {
   /** Termination releases an active decoder and prevents stale retry results. */
   cancel(id: string) {
     this.queue = this.queue.filter((task) => task.id !== id);
+    this.preparing.delete(id);
     for (const slot of this.slots) {
       if (slot.busy === id) {
         slot.worker.terminate();
@@ -189,6 +209,7 @@ export class WorkerPool {
   cancelAll() {
     const ids = this.slots.map((s) => s.busy).filter((id): id is string => id !== null);
     this.queue = [];
+    this.preparing.clear();
     for (const id of ids) this.cancel(id);
     this.paused = false;
   }
@@ -202,6 +223,10 @@ export class WorkerPool {
 
     if (!this.paused) {
       while (this.queue.length > 0) {
+        const next = this.queue[0];
+        if (!next || this.preparing.has(next.id)) break;
+        const runningMemory = this.slots.reduce((sum, candidate) => sum + candidate.memory, 0);
+        if (runningMemory > 0 && runningMemory + (next.estimatedMemory ?? this.memoryBudget) > this.memoryBudget) break;
         if (this.slots.filter((candidate) => candidate.busy !== null).length >= this.concurrency) break;
         let slot = this.slots.find((s) => s.busy === null);
         if (!slot) {
@@ -211,6 +236,7 @@ export class WorkerPool {
         const task = this.queue.shift();
         if (!task) break;
         slot.busy = task.id;
+        slot.memory = task.estimatedMemory ?? this.memoryBudget;
         slot.worker.postMessage({
           type: "process",
           id: task.id,

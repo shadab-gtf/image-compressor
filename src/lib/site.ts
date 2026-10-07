@@ -52,6 +52,8 @@ export const PUBLIC_PATHS = [
   "/",
   "/compress-image",
   "/resize-image",
+  "/crop-image",
+  "/export-recipes",
   "/convert-image",
   "/bulk-image-compressor",
   "/bulk-image-resizer",
@@ -65,6 +67,11 @@ export const PUBLIC_PATHS = [
   "/enhance-image",
   "/privacy",
   "/formats",
+  "/guides",
+  "/guides/choose-image-format",
+  "/guides/meet-upload-size-limit",
+  "/guides/prepare-product-photos",
+  "/guides/keep-transparent-background",
 ] as const;
 
 interface PageMetadataInput {

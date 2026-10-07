@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { formatBytes, savingsPercent } from "@/lib/bytes";
 import { Badge, ProgressBar } from "@/components/ui/progress";
 import { DoodleIcon } from "@/components/ui/doodle-icon";
-import { downloadJob } from "@/services/download-service";
+import { downloadJob, renameJob } from "@/services/download-service";
 import { cancelJob, startProcessing } from "@/services/processing-service";
 import { removeJobs, requeue, setSelected } from "@/stores/queue-store";
 import { FORMAT_LABEL } from "@/types/image";
@@ -138,7 +138,7 @@ export const JobRow = memo(function JobRow({
       <div className="flex shrink-0 items-center gap-0.5">
         {job.status === "done" && (
           <RowButton
-            label={`Download ${job.file.name}`}
+            label={`Download ${renameJob(job, renamePattern, index, total)}`}
             onClick={() => downloadJob(job, renamePattern, index, total)}
           >
             <DoodleIcon name="download" size={16} />

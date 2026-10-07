@@ -7,6 +7,7 @@ import { ToolIcon } from "@/components/ui/tool-icon";
 import { DoodleIcon } from "@/components/ui/doodle-icon";
 import { UploadEntry } from "@/features/bulk/upload-entry";
 import { StudioLoader } from "@/features/studio/studio-loader";
+import { RecipeLoader } from "@/features/recipes/recipe-loader";
 import type { ToolDefinition } from "@/types/catalog";
 
 const stepIcons = ["select-image", "adjust-image", "save-image"] as const;
@@ -39,7 +40,7 @@ export function ToolSection({ tool }: { tool: ToolDefinition }) {
         </section>
         <section aria-label={tool.name} className="sf-page-shell pb-8 md:pb-12">
           <Suspense fallback={<WorkspaceSkeleton />}>
-            {tool.mode ? (
+            {tool.slug === "export-recipes" ? <RecipeLoader /> : tool.mode ? (
               <StudioLoader key={tool.mode} mode={tool.mode} />
             ) : (
               <div className="sf-card-flat p-4 md:p-8">

@@ -1,4 +1,5 @@
 import { DEFAULT_OPTIONS, type Preset, type ProcessingOptions } from "@/types/options";
+import { parseOptions } from "@/lib/preset-schema";
 
 /**
  * Built-in presets.
@@ -142,24 +143,7 @@ function record(value: unknown): value is Record<string, unknown> {
 }
 
 function validOptions(value: unknown): value is ProcessingOptions {
-  if (!record(value) || !record(value.resize) || !record(value.compression) || !record(value.output)) return false;
-  const { resize, compression, output } = value;
-  const positive = (number: unknown) => typeof number === "number" && Number.isFinite(number) && number > 0;
-  const optionalPositive = (number: unknown) => number === undefined || positive(number);
-  if (typeof resize.mode !== "string" || !["none", "exact", "width", "height", "percentage", "maxWidth", "maxHeight", "fit", "fill", "crop"].includes(resize.mode) ||
-      typeof resize.maintainAspectRatio !== "boolean" || typeof resize.preventUpscale !== "boolean" ||
-      !optionalPositive(resize.width) || !optionalPositive(resize.height) || !optionalPositive(resize.percentage)) return false;
-  if (resize.crop !== undefined && (!record(resize.crop) || !positive(resize.crop.width) || !positive(resize.crop.height) ||
-      typeof resize.crop.x !== "number" || !Number.isFinite(resize.crop.x) || typeof resize.crop.y !== "number" || !Number.isFinite(resize.crop.y))) return false;
-  if (typeof compression.mode !== "string" || !["smart", "quality", "lossless", "targetSize"].includes(compression.mode) ||
-      typeof compression.quality !== "number" || !Number.isFinite(compression.quality) || compression.quality < 1 || compression.quality > 100 ||
-      typeof compression.targetTolerance !== "number" || !Number.isFinite(compression.targetTolerance) || compression.targetTolerance < 0 || compression.targetTolerance > 1 ||
-      typeof compression.allowDownscaleForTarget !== "boolean" || !optionalPositive(compression.targetBytes) ||
-      (compression.mode === "targetSize" && !positive(compression.targetBytes)) ||
-      (compression.pngPaletteColors !== undefined && (typeof compression.pngPaletteColors !== "number" || !Number.isInteger(compression.pngPaletteColors) || compression.pngPaletteColors < 2 || compression.pngPaletteColors > 256))) return false;
-  return typeof output.format === "string" && ["keep", "auto", "jpeg", "png", "webp", "avif"].includes(output.format) &&
-    typeof output.metadata === "string" && ["preserve", "removePersonal", "removeAll"].includes(output.metadata) &&
-    typeof output.background === "string" && /^#[0-9a-f]{6}$/i.test(output.background);
+  try { parseOptions(value); return true; } catch { return false; }
 }
 
 /**

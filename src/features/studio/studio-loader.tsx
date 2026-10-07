@@ -10,7 +10,7 @@ const ImageStudio = dynamic(
 export function StudioLoader({
   mode,
 }: {
-  mode: "remove-background" | "enhance-image";
+  mode: import("@/types/studio").StudioMode;
 }) {
   return <ImageStudio mode={mode} />;
 }

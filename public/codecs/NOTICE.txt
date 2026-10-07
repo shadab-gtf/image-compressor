@@ -1,0 +1,1 @@
+jSquash WebP 1.5.0 and JPEG 1.6.0 encoder packages are derived from Google Squoosh and licensed under Apache-2.0. Copyright Google Inc.; modifications by Jamie Sinclair. Bundled libwebp and MozJPEG source notices are included in their package distributions. Source: https://github.com/jamsinclair/jSquash

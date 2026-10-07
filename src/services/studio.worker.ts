@@ -2,6 +2,8 @@ import { HEADER_BYTES, readHeaderDimensions } from "@/engines/header";
 import { sniffFormat } from "@/lib/format";
 import type { StudioImage, StudioRequest, StudioResponse, StudioSettings } from "@/types/studio";
 import { enhancePixels, removeSolidBackground } from "./studio-pixels";
+import { cropGeometry, fillBackground, paintStroke } from "@/engines/editor";
+import { DEFAULT_CROP } from "@/types/editor";
 
 const MAX_PIXELS = 24_000_000;
 const MAX_EDGE = 8192;
@@ -41,8 +43,9 @@ async function decode(file: File): Promise<ImageBitmap> {
   validateSize(dimensions.width, dimensions.height);
   let bitmap: ImageBitmap;
   try {
-    bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-  } catch {
+    bitmap = format === "tiff" ? await (await import("@/engines/tiff")).decodeTiff(file) : await createImageBitmap(file, { imageOrientation: "from-image" });
+  } catch (cause) {
+    if (format === "tiff" && cause instanceof Error) throw cause;
     throw new Error("This browser could not read the image. Try a JPEG or PNG version, or update your browser.");
   }
   try {
@@ -168,6 +171,16 @@ async function portraitMatte(bitmap: ImageBitmap): Promise<OffscreenCanvas> {
 }
 
 async function processImage(request: Extract<StudioRequest, { type: "process" }>, bitmap: ImageBitmap): Promise<StudioImage> {
+  if (request.mode === "crop-image") {
+    const plan = cropGeometry(bitmap.width, bitmap.height, request.settings.crop ?? DEFAULT_CROP);
+    validateSize(plan.width, plan.height);
+    const output = canvas2d(plan.width, plan.height);
+    output.context.translate(plan.width / 2, plan.height / 2);
+    output.context.rotate(plan.radians);
+    output.context.drawImage(bitmap, plan.x, plan.y, plan.cropWidth, plan.cropHeight, -plan.cropWidth / 2, -plan.cropHeight / 2, plan.cropWidth, plan.cropHeight);
+    progress(0.9, "Exporting your crop at the selected resolution");
+    return { blob: await output.canvas.convertToBlob({ type: "image/png" }), width: plan.width, height: plan.height };
+  }
   const settings: StudioSettings = request.settings;
   const scale = request.mode === "enhance-image" ? settings.scale : 1;
   const width = bitmap.width * scale;
@@ -210,6 +223,34 @@ async function processImage(request: Extract<StudioRequest, { type: "process" }>
   return { blob, width, height };
 }
 
+async function editCutout(request: Extract<StudioRequest, { type: "edit-cutout" }>, original: ImageBitmap): Promise<StudioImage> {
+  if (request.strokes.reduce((total, stroke) => total + stroke.points.length, 0) > 100_000 || request.strokes.some((stroke) => (stroke.opacity !== undefined && (!Number.isFinite(stroke.opacity) || stroke.opacity < 0 || stroke.opacity > 1)) || (stroke.hardness !== undefined && (!Number.isFinite(stroke.hardness) || stroke.hardness < 0 || stroke.hardness > 1)))) throw new Error("This edit history is too large or invalid. Reset the mask and use fewer strokes.");
+  if (request.strokes.length > 200 || request.strokes.some((stroke) => stroke.points.length > 5000 || !Number.isFinite(stroke.size) || stroke.size <= 0 || stroke.size > 1 || stroke.points.some((point) => ![point.x, point.y, point.pressure].every(Number.isFinite) || point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1 || point.pressure < 0 || point.pressure > 1))) throw new Error("This edit history is too large or invalid. Apply a smaller set of corrections.");
+  const { width, height } = original;
+  const cutout = await createImageBitmap(request.cutout);
+  let background: ImageBitmap | undefined;
+  try {
+    if (cutout.width !== width || cutout.height !== height) throw new Error("The mask no longer matches this source. Run background removal again.");
+    if (request.background.kind === "image") background = await decode(request.background.file);
+    const mask = canvas2d(width, height);
+    mask.context.drawImage(cutout, 0, 0);
+    for (const stroke of request.strokes) paintStroke(mask.context, stroke, width, height);
+    progress(0.5, "Applying your reversible mask corrections");
+    const subject = canvas2d(width, height);
+    subject.context.drawImage(original, 0, 0);
+    subject.context.globalCompositeOperation = "destination-in";
+    subject.context.drawImage(mask.canvas, 0, 0);
+    const output = canvas2d(width, height);
+    fillBackground(output.context, width, height, request.background, background);
+    output.context.drawImage(subject.canvas, 0, 0);
+    progress(0.9, "Saving the same background and mask shown in your editor");
+    return { blob: await output.canvas.convertToBlob({ type: "image/png" }), width, height };
+  } finally {
+    cutout.close();
+    background?.close();
+  }
+}
+
 scope.onmessage = async (event: MessageEvent<StudioRequest>) => {
   let bitmap: ImageBitmap | undefined;
   try {
@@ -223,6 +264,8 @@ scope.onmessage = async (event: MessageEvent<StudioRequest>) => {
       preview.context.drawImage(bitmap, 0, 0, preview.canvas.width, preview.canvas.height);
       const blob = await preview.canvas.convertToBlob({ type: "image/png" });
       send({ type: "result", image: { blob, width: bitmap.width, height: bitmap.height } });
+    } else if (event.data.type === "edit-cutout") {
+      send({ type: "result", image: await editCutout(event.data, bitmap) });
     } else {
       const image = await processImage(event.data, bitmap);
       send({ type: "result", image });

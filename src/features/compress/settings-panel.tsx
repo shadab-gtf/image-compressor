@@ -23,6 +23,7 @@ import type {
   MetadataPolicy,
   ResizeMode,
 } from "@/types/options";
+import { SavedPresets } from "./saved-presets";
 
 const TARGET_PRESETS = [100_000, 200_000, 500_000, 1_000_000];
 
@@ -59,7 +60,7 @@ export function SettingsPanel({ className }: { className?: string }) {
       { value: "auto", label: "Auto (smallest)" },
     ];
     for (const format of OUTPUT_FORMATS) {
-      const usable = support?.encode[format] ?? false;
+      const usable = (options.output.encoder === "wasm" && (format === "jpeg" || format === "webp")) || (support?.encode[format] ?? false);
       entries.push({
         value: format,
         label: usable
@@ -69,7 +70,7 @@ export function SettingsPanel({ className }: { className?: string }) {
       });
     }
     return entries;
-  }, [support]);
+  }, [support, options.output.encoder]);
 
   const { compression, resize, output } = options;
   const needsDimensions =
@@ -127,6 +128,13 @@ export function SettingsPanel({ className }: { className?: string }) {
             ),
           )}
         </select>
+        <SavedPresets />
+        <label className="mt-3 block text-sm">Encoder
+          <select aria-label="Image encoder" value={output.encoder ?? "browser"} onChange={(event) => setOptions((current) => ({ ...current, output: { ...current.output, encoder: event.target.value === "wasm" ? "wasm" : "browser" } }))} className="mt-2 h-11 w-full rounded-xl border border-line bg-surface px-3">
+            <option value="browser">Browser — faster, no extra download</option><option value="wasm">Advanced — MozJPEG / libwebp</option>
+          </select>
+        </label>
+        <p className="mt-2 text-xs leading-5 text-muted">Advanced downloads an open-source encoder when JPEG or WebP is first exported. Up to 12 MP; other formats use the browser. Check quality and file size before keeping a result.</p>
       </Field>
 
       {/* ---- Compression ---- */}

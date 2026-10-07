@@ -7,7 +7,7 @@
  */
 
 /** Formats the engine has an actual implemented path for. */
-export const IMAGE_FORMATS = ["jpeg", "png", "webp", "avif", "gif", "bmp"] as const;
+export const IMAGE_FORMATS = ["jpeg", "png", "webp", "avif", "gif", "bmp", "tiff"] as const;
 export type ImageFormat = (typeof IMAGE_FORMATS)[number];
 
 /** Formats the engine can *write*. GIF and BMP are decode-only. */
@@ -23,6 +23,7 @@ export const MIME_BY_FORMAT: Record<ImageFormat, string> = {
   avif: "image/avif",
   gif: "image/gif",
   bmp: "image/bmp",
+  tiff: "image/tiff",
 };
 
 export const EXTENSION_BY_FORMAT: Record<ImageFormat, string> = {
@@ -32,6 +33,7 @@ export const EXTENSION_BY_FORMAT: Record<ImageFormat, string> = {
   avif: "avif",
   gif: "gif",
   bmp: "bmp",
+  tiff: "tiff",
 };
 
 export const FORMAT_LABEL: Record<ImageFormat, string> = {
@@ -41,6 +43,7 @@ export const FORMAT_LABEL: Record<ImageFormat, string> = {
   avif: "AVIF",
   gif: "GIF",
   bmp: "BMP",
+  tiff: "TIFF",
 };
 
 /** Formats that can carry an alpha channel. */
@@ -51,6 +54,7 @@ export const SUPPORTS_ALPHA: Record<ImageFormat, boolean> = {
   avif: true,
   gif: true,
   bmp: false,
+  tiff: true,
 };
 
 /** Formats whose encoder takes a quality parameter. */

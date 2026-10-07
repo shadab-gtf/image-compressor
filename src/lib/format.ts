@@ -26,6 +26,7 @@ function startsWith(bytes: Uint8Array, signature: readonly number[]): boolean {
 
 export function sniffFormat(bytes: Uint8Array): ImageFormat | null {
   if (bytes.length < 4) return null;
+  if (startsWith(bytes, [73, 73, 42, 0]) || startsWith(bytes, [77, 77, 0, 42])) return "tiff";
 
   // JPEG: SOI marker.
   if (startsWith(bytes, [0xff, 0xd8, 0xff])) return "jpeg";
@@ -76,6 +77,7 @@ export function formatFromExtension(name: string): ImageFormat | null {
   const ext = name.toLowerCase().split(".").pop();
   if (!ext) return null;
   if (ext === "jpg" || ext === "jpeg") return "jpeg";
+  if (ext === "tif") return "tiff";
   for (const [format, extension] of Object.entries(EXTENSION_BY_FORMAT)) {
     if (extension === ext) return format as ImageFormat;
   }

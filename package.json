@@ -23,6 +23,7 @@
     "setup:studio": "node --experimental-strip-types scripts/setup-studio.ts",
     "test:engines": "node --experimental-strip-types scripts/test-engines.ts",
     "test:studio": "node --experimental-strip-types scripts/test-studio.ts",
+    "test:roadmap": "node --experimental-strip-types scripts/test-roadmap.ts",
     "test:neural": "node --experimental-strip-types scripts/test-neural-browser.ts",
     "e2e:studio": "node --experimental-strip-types scripts/studio-e2e.ts",
     "test:pwa": "node --experimental-strip-types scripts/test-service-worker.ts",
@@ -32,6 +33,8 @@
     "check": "npm run lint && npm run typecheck && npm run test:engines && npm run test:studio"
   },
   "dependencies": {
+    "@jsquash/jpeg": "^1.6.0",
+    "@jsquash/webp": "^1.5.0",
     "motion": "^14.0.0",
     "next": "16.4.0",
     "onnxruntime-web": "1.30.0",

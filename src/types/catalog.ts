@@ -16,7 +16,7 @@ export interface ToolDefinition {
   icon: ToolIcon;
   featured?: boolean;
   badge?: string;
-  mode?: "remove-background" | "enhance-image";
+  mode?: import("./studio").StudioMode;
   options?: ProcessingOptions;
   steps: readonly string[];
   note: string;

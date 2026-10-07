@@ -20,6 +20,20 @@ function options(
 }
 const tools: ToolDefinition[] = [
   {
+    slug: "export-recipes", name: "Export recipes", seoTitle: "Free Multi-Size Image Export",
+    title: "One photo. Every size you need.", description: "Prepare a product listing, website card and social post together. Edit the sizes, names and formats, then download your variants in one ZIP. Your photo stays on your device.",
+    shortDescription: "Create named image variants in one ZIP.", icon: "layers",
+    steps: ["Choose a photo and a starting recipe.", "Edit each variant's name, size, format and quality.", "Download a ZIP with your images and an export report."],
+    note: "Recipes keep small images at their original resolution. Fit preserves the whole photo; Fill crops the centre. A skipped variant is listed in the report. Up to 20 variants and 128 MiB of output per photo.",
+  },
+  {
+    slug: "crop-image", name: "Crop & rotate", seoTitle: "Free Image Cropper and Rotator",
+    title: "Crop your photo to the part that matters.", description: "Frame a product, straighten a photo or crop a portrait for your next post. Drag the corners, choose a familiar aspect ratio and save a PNG, all on your device.",
+    shortDescription: "Crop, rotate and straighten with a live selection.", icon: "resize", mode: "crop-image",
+    steps: ["Choose a photo from your device.", "Drag the crop handles, choose a ratio and adjust rotation.", "Apply your crop, check the result and download PNG."],
+    note: "Straightening can leave transparent corners. The crop uses your original image pixels; it does not invent detail or enlarge a small selection.",
+  },
+  {
     slug: "compress-image",
     name: "Compress image",
     seoTitle: "Free Image Compressor",
@@ -295,7 +309,7 @@ const catalog: SiteCatalog = {
     {
       question: "Which image formats can I use?",
       answer:
-        "You can work with JPEG, PNG, WebP, AVIF, GIF and BMP when your browser can read them. The compression and conversion tools export JPEG, PNG, WebP, or AVIF when supported; background removal and enhancement save PNG files. Animation becomes a still image. TIFF, HEIC, RAW, PDF, SVG and JPEG XL are not supported.",
+        "You can work with JPEG, PNG, WebP, AVIF, GIF and BMP when your browser can read them. A local adapter reads single-page, uncompressed 8-bit RGB or grayscale TIFF without an ICC profile. Compression and conversion export JPEG, PNG, WebP, or supported AVIF; editing tools save PNG. Animation becomes a still image. Other TIFF variants, HEIC, RAW, PDF, SVG and JPEG XL are not supported.",
     },
     {
       question: "How does free background removal work?",
@@ -361,7 +375,13 @@ const catalog: SiteCatalog = {
       note: "Convert still images when your browser can decode them.",
     },
     {
-      name: "TIFF / HEIC / RAW / SVG / PDF / JXL",
+      name: "TIFF / TIF",
+      input: "Limited adapter",
+      output: "No",
+      note: "Single-page, uncompressed 8-bit RGB/grayscale, chunky strips, orientations 1–8 and associated/unassociated alpha. No ICC profiles, compressed/tiled TIFF, CMYK, high bit depth or BigTIFF. Convert those in a colour-managed desktop editor first.",
+    },
+    {
+      name: "HEIC / RAW / SVG / PDF / JXL",
       input: "Not supported",
       output: "Not supported",
       note: "Save a PNG or JPEG in a compatible app first, then bring that file here.",

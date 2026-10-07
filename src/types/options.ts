@@ -74,6 +74,8 @@ export type OutputOptions = {
   /** Matte colour used when flattening alpha into a format without it. */
   background: string;
   metadata: MetadataPolicy;
+  /** Opt-in deterministic WASM JPEG/WebP encoder; other formats use the browser. */
+  encoder?: "browser" | "wasm";
 };
 
 /* -------------------------------------------------------------------------- */

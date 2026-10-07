@@ -119,7 +119,12 @@ export async function encodeCanvas(
   canvas: OffscreenCanvas,
   format: OutputFormat,
   quality: number,
+  encoder: "browser" | "wasm" = "browser",
 ): Promise<Blob> {
+  if (encoder === "wasm" && (format === "jpeg" || format === "webp")) {
+    const { encodeWasm } = await import("@/codecs/wasm-encode");
+    return encodeWasm(canvas, format, Math.max(1, Math.min(100, quality)));
+  }
   const type = MIME_BY_FORMAT[format];
   const blob = await canvas.convertToBlob(
     SUPPORTS_QUALITY[format]
@@ -169,6 +174,7 @@ export async function encodeToTargetSize(
     minQuality?: number;
     maxQuality?: number;
     signal?: { aborted: boolean };
+    encoder?: "browser" | "wasm";
   },
 ): Promise<TargetSearchResult> {
   if (!Number.isFinite(targetBytes) || targetBytes < 1 || !Number.isFinite(options.tolerance) || options.tolerance < 0 || options.tolerance > 1) {
@@ -200,7 +206,7 @@ export async function encodeToTargetSize(
     }
     let blob: Blob;
     try {
-      blob = await encodeCanvas(canvas, format, quality);
+      blob = await encodeCanvas(canvas, format, quality, options.encoder);
     } finally {
       canvas.width = 1;
       canvas.height = 1;

@@ -7,6 +7,8 @@ const groups = [
     links: [
       { href: "/compress-image", label: "Compress image" },
       { href: "/resize-image", label: "Resize image" },
+      { href: "/crop-image", label: "Crop & rotate" },
+      { href: "/export-recipes", label: "Export recipes" },
       { href: "/convert-image", label: "Convert image" },
       { href: "/bulk-image-compressor", label: "Batch image compressor" },
     ],
@@ -24,6 +26,7 @@ const groups = [
     title: "Help and guides",
     links: [
       { href: "/formats", label: "Formats & limits" },
+      { href: "/guides", label: "Image guides" },
       { href: "/privacy", label: "Privacy" },
       { href: "/#faq", label: "Questions & answers" },
       { href: "/compress-image-to-100kb", label: "Compress to 100 KB" },

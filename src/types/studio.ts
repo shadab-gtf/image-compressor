@@ -1,4 +1,5 @@
-export type StudioMode = "remove-background" | "enhance-image";
+import type { BackgroundFill, CropTransform, MaskStroke } from "./editor";
+export type StudioMode = "remove-background" | "enhance-image" | "crop-image";
 export type RemovalMethod = "general" | "portrait" | "solid";
 
 export interface StudioSettings {
@@ -9,6 +10,7 @@ export interface StudioSettings {
   sharpness: number;
   enhancement: "ai" | "standard";
   scale: 1 | 2 | 3 | 4;
+  crop?: CropTransform;
 }
 
 export const DEFAULT_STUDIO_SETTINGS: StudioSettings = {
@@ -34,6 +36,7 @@ export interface StudioProgress {
 
 export type StudioRequest =
   | { type: "inspect"; file: File }
+  | { type: "edit-cutout"; file: File; cutout: Blob; strokes: MaskStroke[]; background: BackgroundFill }
   | { type: "process"; file: File; mode: StudioMode; settings: StudioSettings };
 
 export type StudioResponse =

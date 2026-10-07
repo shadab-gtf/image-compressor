@@ -42,7 +42,7 @@ const { DEFAULT_OPTIONS } = loadModule<typeof import("../src/types/options.ts")>
 const { WorkerPool } = loadModule<typeof import("../src/workers/pool.ts")>("src/workers/pool.ts");
 const { loadCustomPresets } = loadModule<typeof import("../src/lib/presets.ts")>("src/lib/presets.ts");
 const support: CodecSupport = {
-  decode: { jpeg: true, png: true, webp: true, avif: true, gif: true, bmp: true },
+  decode: { jpeg: true, png: true, webp: true, avif: true, gif: true, bmp: true, tiff: true },
   encode: { jpeg: true, png: true, webp: true, avif: false },
   imageBitmap: true,
   offscreenCanvas: true,
@@ -193,7 +193,7 @@ await check("CSV manifests escape spreadsheet formulas in input filenames", () =
   assert.ok(csv.includes('"\'=HYPERLINK(""https://example.invalid"")\rname.png"'));
 });
 
-await check("cancelled worker replies cannot overwrite a retried job", () => {
+await check("cancelled worker replies cannot overwrite a retried job", async () => {
   class FakeWorker {
     static instances: FakeWorker[] = [];
     listeners = new Map<string, Array<(event: unknown) => void>>();
@@ -215,10 +215,12 @@ await check("cancelled worker replies cannot overwrite a retried job", () => {
   const pool = new WorkerPool({ onProgress: (id) => events.push(id), onDone: () => undefined, onFailed: () => undefined, onIdle: () => undefined });
   const task = { id: "retry", name: "photo.png", file: new File(["image"], "photo.png"), options: DEFAULT_OPTIONS };
   pool.enqueue([task]);
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
   const original = FakeWorker.instances[0]!;
   pool.cancel("retry");
   assert.equal(original.terminated, true);
   pool.enqueue([task]);
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
   original.emit({ type: "progress", id: "retry", fraction: 1 });
   assert.deepEqual(events, []);
   FakeWorker.instances[1]!.emit({ type: "progress", id: "retry", fraction: 0.1 });
