@@ -55,6 +55,7 @@ try {
   const image = await synthetic();
   await page.locator("input[type=file]").first().setInputFiles({ name: "soft.png", mimeType: "image/png", buffer: Buffer.from(image, "base64") });
   await page.getByAltText("Original image preview", { exact: true }).waitFor();
+  await page.getByLabel("Enhancement method").selectOption("ai");
   let ai: Awaited<ReturnType<typeof pixels>> | undefined;
   for (const scale of [2, 3, 4]) {
     await page.locator("select[id$=scale]").selectOption(String(scale));
@@ -87,6 +88,7 @@ try {
   console.log("PASS: BiRefNet predicts transparent background and opaque foreground at original resolution");
   await page.screenshot({ path: "temp/birefnet-result.png" });
   await page.setViewportSize({ width: 320, height: 800 });
+  await page.waitForTimeout(300);
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   assert.deepEqual(errors, []);
   assert.deepEqual(external, []);

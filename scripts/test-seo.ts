@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -10,6 +11,22 @@ const base = new URL(process.env.E2E_BASE ?? "http://localhost:3102");
 const reportPath = path.join(tmpdir(), "shrinkfox-seo-audit.json");
 const liveSite = { url: "https://seo-test.example", indexable: true };
 const previewSite = { ...liveSite, indexable: false };
+
+for (const [overrides, expected] of [
+  [{}, true],
+  [{ VERCEL_ENV: "preview" }, false],
+  [{ VERCEL_ENV: "development" }, false],
+  [{ NODE_ENV: "development" }, false],
+  [{ DISABLE_INDEXING: "true" }, false],
+  [{ NEXT_PUBLIC_SITE_URL: "http://localhost:3000" }, false],
+] as const) {
+  const actual = JSON.parse(execFileSync(process.execPath, ["--experimental-strip-types", "--input-type=module", "-e", "import { SITE } from './src/lib/site.ts'; console.log(JSON.stringify({ indexable: SITE.indexable, url: SITE.url }));"], {
+    encoding: "utf8",
+    env: { ...process.env, NODE_ENV: "production", VERCEL_ENV: "production", DISABLE_INDEXING: "", NEXT_PUBLIC_SITE_URL: "", ...overrides },
+  })) as { indexable: boolean; url: string };
+  assert.equal(actual.indexable, expected, `Crawl policy: ${JSON.stringify(overrides)}`);
+  if (!("NEXT_PUBLIC_SITE_URL" in overrides)) assert.equal(actual.url, "https://shrinkfox.vercel.app");
+}
 
 // Check the launch policy without publishing a made-up domain into the app.
 assert.deepEqual(createSitemap(previewSite, PUBLIC_PATHS), []);
@@ -97,7 +114,7 @@ try {
     const origin = new URL(home.canonical ?? "").origin;
     assert.ok(robots.includes(`Sitemap: ${origin}/sitemap.xml`));
     for (const report of reports.filter((entry) => entry.path !== "/app")) {
-      assert.equal(report.canonical, new URL(report.path, origin).href);
+      assert.equal(new URL(report.canonical ?? "").href, new URL(report.path, origin).href);
       assert.doesNotMatch(report.robots, /noindex/);
     }
     assert.ok(urls.every((url) => url.origin === origin));

@@ -4,6 +4,8 @@ Updated 7 October 2026. The implementation status below separates available feat
 
 ## Implementation status
 
+Enhancement update: Full-image deblur + enhancement is now the default: NAFNet processes the whole frame, followed by Real-ESRGAN detail enhancement. Optional RestoreFormer++ face repair runs afterward. PaddleOCR.js with reviewed text reconstruction, fast screenshot processing and restoration strength controls are also available. Neural restoration supports WebGPU and WASM CPU execution. A separate 7,680-pixel long-edge JPEG export enlarges the processed result; it does not guarantee recovered 8K detail. Dedicated defocus evaluation and physical-device benchmarks remain future work. See [IMAGE-ENHANCEMENT.md](IMAGE-ENHANCEMENT.md).
+
 | Order | Implemented in this release | Remaining validation or expansion |
 | --- | --- | --- |
 | 1 | Erase/restore mask editor, reversible stroke history, undo/redo, brush size, opacity/hardness, pen pressure, pointer capture, zoom and pan | Physical pen/tablet and Android/iPhone checks; broader hair/glass quality fixtures |
@@ -13,7 +15,7 @@ Updated 7 October 2026. The implementation status below separates available feat
 | 5 | Settings-only local presets, apply/save/delete/delete-all, JSON backup/import, nested schema validation and storage explanations | Browser storage is local and can be cleared; cloud sync is not provided |
 | 6 | Optional, lazy, self-hosted MozJPEG and libwebp WASM encoders through pinned jSquash packages; notices and browser fallback choice | 12 MP advanced-encoder cap. AVIF WASM and comparative physical-phone memory/quality benchmarks remain future work |
 | 7 | Existing BiRefNet Lite general remover with WASM CPU execution, portrait/plain-background alternatives and disclosed download budget | Expanded representative product/animal/hair/glass comparisons |
-| 8 | Existing Real-ESRGAN restoration with 2×/3×/4×, tiled execution, cancellation, comparison and input caps | Physical-device performance matrix; severe blur and unreadable text cannot be guaranteed recoverable |
+| 8 | Real-ESRGAN 2×/3×/4×, NAFNet motion deblur, RestoreFormer++ face restoration, combined processing, strength control, tiled execution, cancellation, comparison and input caps | Physical-device performance matrix, selective face control and more defocus fixtures; severe blur and unreadable text cannot be guaranteed recoverable |
 | 9 | Original bounded TIFF 6.0 reader: single-page, uncompressed, chunky 8-bit RGB/grayscale, orientations 1–8 and alpha | ICC-tagged, compressed/tiled, CMYK, high-bit-depth and BigTIFF are rejected. HEIC/RAW/JXL/PDF/SVG need separate adapter and license reviews |
 | 10 | Pixel-based memory estimates before worker scheduling, isolated errors/retries, serial recipe workers and streamed ZIP to a chosen disk file where supported | File System Access is browser dependent; regular download fallback remains. Large physical-device soak tests are pending |
 
@@ -23,7 +25,7 @@ Downloads preserve the source basename unless a custom rename pattern is supplie
 
 Run `npm run check`, `npm run test:roadmap`, `npm run test:seo` and `npm run test:pwa` against a production build. The roadmap browser test verifies downloaded mask pixels, reversible corrections, backgrounds, crop geometry, recipe archives, preset persistence, JPEG/WebP WASM exports, a real TIFF fixture with all orientations/partial alpha, and narrow viewport overflow. Emulation does not substitute for physical phone testing.
 
-Production deployment, domain ownership, Search Console verification, real search performance and physical-device benchmarks remain external release work. `https://shrinkfox.vercel.app` is still a proposed address; indexing stays disabled until `NEXT_PUBLIC_SITE_URL` is configured for a verified deployment. Follow [SEO-LAUNCH-GUIDE.md](SEO-LAUNCH-GUIDE.md).
+`https://shrinkfox.vercel.app` is live and is now the default production origin. Its currently deployed build blocks indexing; redeploy this update to apply the corrected metadata, sitemap and robots policy. Preview/development builds remain non-indexed. The updated local production build scores 100 in Lighthouse's SEO category; this is not a ranking guarantee. Search Console verification, real search performance and physical-device benchmarks remain release work. Follow [SEO-LAUNCH-GUIDE.md](SEO-LAUNCH-GUIDE.md).
 
 The GIMP/digiKam/ComfyUI references are workflow inspiration. This release implements browser controls and local workers; it does not install or bundle those desktop applications. The codecs use [jSquash](https://github.com/jamsinclair/jSquash), and the TIFF implementation follows [the TIFF tag specification](https://www.loc.gov/preservation/digital/formats/content/tiff_tags.shtml).
 
@@ -94,7 +96,7 @@ Use the same permitted test images and export sizes when comparing products. Rec
 
 ## Growth and content plan
 
-1. Launch the working app at a verified HTTPS address. The intended address is `https://shrinkfox.vercel.app`, subject to Vercel project-name availability. Follow `SEO-LAUNCH-GUIDE.md` before enabling indexing.
+1. Redeploy the updated app at `https://shrinkfox.vercel.app` and verify its public crawl policy. Follow `SEO-LAUNCH-GUIDE.md` for launch checks and custom-domain changes.
 2. Publish a few substantial guides with original examples: choosing JPG/PNG/WebP, meeting upload limits without losing readable text, preparing product photos, and understanding transparent PNGs.
 3. Link each guide to the exact tool and sensible preset. Explain the limits and show actual downloaded results.
 4. Add new landing pages only when a distinct workflow, audience or useful demonstration justifies them. Avoid dozens of near-identical keyword pages.

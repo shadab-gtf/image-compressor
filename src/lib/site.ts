@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 function resolveSiteUrl(): URL {
   const value = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  const url = new URL(value || "http://localhost:3000");
+  const url = new URL(value || "https://shrinkfox.vercel.app");
   if (
     !["http:", "https:"].includes(url.protocol) ||
     url.username ||
@@ -17,7 +17,6 @@ function resolveSiteUrl(): URL {
 
 const siteUrl = resolveSiteUrl();
 const isPublicOrigin =
-  Boolean(process.env.NEXT_PUBLIC_SITE_URL) &&
   !["localhost", "127.0.0.1", "[::1]"].includes(siteUrl.hostname);
 
 export const SITE = {
@@ -27,7 +26,12 @@ export const SITE = {
     "Free image tools to compress, resize and convert photos, remove backgrounds and upscale with AI. " +
     "Work in your browser without uploads, signup or added watermarks.",
   url: siteUrl.origin,
-  indexable: isPublicOrigin,
+  indexable:
+    isPublicOrigin &&
+    process.env.NODE_ENV === "production" &&
+    process.env.VERCEL_ENV !== "preview" &&
+    process.env.VERCEL_ENV !== "development" &&
+    process.env.DISABLE_INDEXING !== "true",
   trust: ["Local processing", "Free to use", "No sign-up", "No image uploads"],
 } as const;
 

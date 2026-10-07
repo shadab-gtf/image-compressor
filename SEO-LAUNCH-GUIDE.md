@@ -1,6 +1,6 @@
 # ShrinkFox SEO setup and heading guide
 
-Updated 7 October 2026. Planned address: `https://shrinkfox.vercel.app`. This address has not been confirmed as an existing deployment.
+Updated 7 October 2026. Live address: `https://shrinkfox.vercel.app`. The existing deployment was verified to emit `noindex, follow` and `Disallow: /`. This update corrects the production defaults; a redeploy is required to change the live response.
 
 ## Sitemap and robots.txt
 
@@ -11,16 +11,16 @@ Next.js generates these files; do not add conflicting copies under `public/`:
 | `/sitemap.xml` | `src/app/sitemap.ts` | Lists public pages, including tools derived from the catalog |
 | `/robots.txt` | `src/app/robots.ts` | Gives crawler access rules and the production sitemap URL |
 
-The standard filename is **robots.txt**, not robot.txt. The sitemap currently covers the home page, 13 tool pages, formats and privacy. The workspace, offline fallback and error pages are excluded. New catalog tools are included automatically.
+The standard filename is **robots.txt**, not robot.txt. The sitemap covers 23 public URLs: the home page, catalogued tools, guides, formats and privacy. The workspace, offline fallback and error pages are excluded. New catalog tools are included automatically.
 
-The shared policy lives in `src/lib/seo/crawl-policy.ts`. It removes duplicate sitemap URLs and does not invent modification dates. Preview builds without a public origin intentionally return an empty sitemap, block crawlers and use noindex metadata.
+The shared policy lives in `src/lib/seo/crawl-policy.ts`. It removes duplicate sitemap URLs and does not invent modification dates. Production defaults to the verified Vercel origin when `NEXT_PUBLIC_SITE_URL` is absent. Vercel preview/development builds, development mode, localhost origins and `DISABLE_INDEXING=true` intentionally return an empty sitemap, block crawlers and use noindex metadata.
 
 Production HTML marked noindex remains crawlable so a crawler can read that instruction. Blocking a URL in robots.txt is not a reliable way to remove it from search. Scripts, styles and images stay crawlable. [Google guidance on noindex](https://developers.google.com/search/docs/crawling-indexing/block-indexing).
 
 ## Launch on the planned Vercel address
 
-1. Create/deploy the Vercel project and confirm its actual HTTPS address. `shrinkfox.vercel.app` depends on availability; use the exact URL Vercel assigns if it differs.
-2. In Vercel project settings, add `NEXT_PUBLIC_SITE_URL=https://shrinkfox.vercel.app` **for Production only**, after confirming that URL. For another domain, substitute its HTTPS origin.
+1. Deploy this update to the existing Vercel production project at `shrinkfox.vercel.app`.
+2. `NEXT_PUBLIC_SITE_URL` is optional for that address. Remove any stale localhost value or set `NEXT_PUBLIC_SITE_URL=https://shrinkfox.vercel.app` for Production. For another domain, substitute its HTTPS origin. Ensure `DISABLE_INDEXING` is not `true` in Production.
 3. Redeploy. Metadata routes and page metadata are generated at build time; changing the environment without rebuilding is insufficient.
 4. Verify the home page has indexable metadata and the correct canonical URL. Check `/sitemap.xml` contains absolute URLs on the final origin and `/robots.txt` links to that sitemap.
 5. Verify `/app` and the offline page remain noindex. Check that important public tools respond with 200 and unknown URLs return 404 when online.
@@ -83,7 +83,7 @@ npm run test:site
 
 `test:site` checks page responses, headings, security headers, PWA assets, mobile layout and offline processing/downloads. For a live build, inspect canonical URLs and indexing status in Search Console too.
 
-There is no honest “100% SEO complete” certificate. The current local preview is intentionally noindex; no current Lighthouse SEO score is claimed. Run Lighthouse on the verified live production URL, inspect every failed audit and check Core Web Vitals on representative devices. Even a 100 SEO audit score does not guarantee traffic or rankings.
+The updated local production build scored **100/100 in Lighthouse 13.0.3's SEO category** on 7 October 2026, and the route audit passed for 23 public pages plus the private workspace. The previous live build still requires redeployment. Rerun Lighthouse on the live production URL after deployment and check Core Web Vitals on representative devices. An SEO audit score does not guarantee indexing, traffic or rankings.
 
 ## Product priorities
 

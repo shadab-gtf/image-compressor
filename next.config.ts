@@ -42,6 +42,7 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "no-referrer" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
   { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
   {
     key: "Permissions-Policy",
@@ -78,6 +79,11 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
+      {
+        source: "/ocr/paddle-worker.js",
+        // The pinned OpenCV build generates bindings inside its isolated worker.
+        headers: [{ key: "Content-Security-Policy", value: csp.replace("'wasm-unsafe-eval'", "'wasm-unsafe-eval' 'unsafe-eval'") }],
+      },
       {
         source: "/sw.js",
         headers: [

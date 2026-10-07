@@ -1,6 +1,6 @@
-type Progress = (fraction: number, label: string) => void;
+export type Progress = (fraction: number, label: string) => void;
 
-async function loadBytes(path: string, size: number, report: Progress, start: number, span: number): Promise<Uint8Array> {
+export async function loadBytes(path: string, size: number, report: Progress, start: number, span: number): Promise<Uint8Array> {
   const url = new URL(path, self.location.origin).href;
   let cache: Cache | undefined;
   try {
@@ -33,15 +33,24 @@ async function loadBytes(path: string, size: number, report: Progress, start: nu
   return bytes;
 }
 
-async function runtime() {
-  const ort = await import("onnxruntime-web/wasm");
-  ort.env.wasm.numThreads = 1;
+export async function runtime() {
+  const ort = await import("onnxruntime-web/webgpu");
+  ort.env.webgpu.powerPreference = "high-performance";
+  ort.env.wasm.numThreads = self.crossOriginIsolated ? Math.min(4, Math.max(1, Math.floor((navigator.hardwareConcurrency || 2) / 2))) : 1;
   ort.env.wasm.proxy = false;
   ort.env.wasm.wasmPaths = {
-    wasm: new URL("/wasm/ort-wasm-simd-threaded.wasm", self.location.origin).href,
-    mjs: new URL("/wasm/ort-wasm-simd-threaded.mjs", self.location.origin).href,
+    wasm: new URL("/wasm/ort-wasm-simd-threaded.jsep.wasm", self.location.origin).href,
+    mjs: new URL("/wasm/ort-wasm-simd-threaded.jsep.mjs", self.location.origin).href,
   };
   return ort;
+}
+
+export async function neuralProviders(): Promise<string[]> {
+  try {
+    const gpu = (navigator as Navigator & { gpu?: { requestAdapter: (options: { powerPreference: "high-performance" }) => Promise<unknown> } }).gpu;
+    if (gpu && await gpu.requestAdapter({ powerPreference: "high-performance" })) return ["webgpu", "wasm"];
+  } catch { /* CPU remains available. */ }
+  return ["wasm"];
 }
 
 function canvas(width: number, height: number) {
@@ -52,15 +61,21 @@ function canvas(width: number, height: number) {
 }
 
 /** Real-ESRGAN General x4v3, padded fixed-size tiles; all computation is in a disposable worker. */
-export async function restorePhoto(bitmap: ImageBitmap, scale: number, report: Progress): Promise<OffscreenCanvas> {
+export async function restorePhoto(bitmap: ImageBitmap | OffscreenCanvas, scale: number, report: Progress): Promise<OffscreenCanvas> {
   if (bitmap.width * bitmap.height > 1_000_000) throw new Error("Real-ESRGAN accepts up to 1 megapixel here. Resize your image first, or use Quick adjustments for larger photos.");
   const ort = await runtime();
   const model = await loadBytes("/models/realesrgan/real_esrgan_general_x4v3.onnx", 161087, report, 0.06, 0.02);
   const weights = await loadBytes("/models/realesrgan/real_esrgan_general_x4v3.data", 4836096, report, 0.08, 0.22);
   report(0.3, "Starting Real-ESRGAN on your device");
-  const session = await ort.InferenceSession.create(model, {
-    executionProviders: ["wasm"], graphOptimizationLevel: "all",
+  const providers = await neuralProviders();
+  const createSession = (executionProviders: string[]) => ort.InferenceSession.create(model, {
+    executionProviders, graphOptimizationLevel: "all",
     externalData: [{ path: "real_esrgan_general_x4v3.data", data: weights }],
+  });
+  const session = await createSession(providers).catch((cause: unknown) => {
+    if (providers[0] !== "webgpu") throw cause;
+    report(0.3, "Starting Real-ESRGAN with CPU processing");
+    return createSession(["wasm"]);
   });
   try {
     const source = canvas(bitmap.width, bitmap.height);

@@ -1,0 +1,32 @@
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+import sharp from 'sharp';
+const browser = await chromium.launch();
+const base = process.env.BASE_URL ?? 'http://localhost:3103';
+const page = await browser.newPage({ serviceWorkers: 'block' });
+const errors: string[]=[]; const external: string[]=[];
+page.on('pageerror',e=>errors.push(e.message));
+page.on('request',r=>{if(!r.url().startsWith(base) && !/^(data:|blob:)/.test(r.url())) external.push(r.url());});
+try {
+await page.goto(`${base}/enhance-image`); await page.waitForLoadState('networkidle');
+const encoded=await page.evaluate(()=>{ const canvas=document.createElement('canvas');canvas.width=640;canvas.height=160;const c=canvas.getContext('2d')!;c.fillStyle='white';c.fillRect(0,0,640,160);c.font='32px Arial';c.fillStyle='black';c.fillText('ShrinkFox text quality 2026',20,60);c.fillText('Read and restore clear words',20,115);return canvas.toDataURL().split(',')[1]!; });
+await page.locator('input[type=file]').first().setInputFiles({name:'words.png',mimeType:'image/png',buffer:Buffer.from(encoded,'base64')});
+await page.getByAltText('Original image preview',{exact:true}).waitFor();
+await page.getByLabel('Enhancement method').selectOption('text');
+const started=Date.now(); await page.getByRole('button',{name:'Enhance image',exact:true}).click();
+await page.getByRole('button',{name:'Read text with PaddleOCR',exact:true}).waitFor();console.log('Screenshot enhancement ms',Date.now()-started);
+await page.getByRole('button',{name:'Read text with PaddleOCR',exact:true}).click();
+await page.getByLabel('Text line 1',{exact:true}).waitFor({timeout:120000});
+console.log('OCR lines',await page.locator('input[aria-label^="Text line"]').evaluateAll(list=>list.map(e=>(e as HTMLInputElement).value)));
+assert.match(await page.locator('input[aria-label^="Text line"]').evaluateAll(list=>list.map(e=>(e as HTMLInputElement).value).join(' ')),/ShrinkFox/i);
+await page.getByRole('checkbox').first().check();await page.getByRole('button',{name:'Apply reviewed text',exact:true}).click();
+await page.getByText('Reviewed text applied. Compare the result before downloading.',{exact:true}).waitFor();
+const downloadEvent = page.waitForEvent('download');
+await page.getByRole('button', { name: 'Download 8K JPEG', exact: true }).click();
+const download = await downloadEvent;
+assert.equal(download.suggestedFilename(), 'words.jpg');
+const metadata = await sharp((await download.path())!).metadata();
+assert.equal(metadata.width, 7680); assert.equal(metadata.height, 1920); assert.equal(metadata.format, 'jpeg');
+console.log('PASS 8K long-edge JPEG dimensions and original filename');
+console.log('Errors',errors,'External requests',external);assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
+} catch(e){console.log(await page.locator('[role=alert]').allTextContents());throw e;}finally{await browser.close();}

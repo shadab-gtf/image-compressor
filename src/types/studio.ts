@@ -8,7 +8,8 @@ export interface StudioSettings {
   contrast: number;
   saturation: number;
   sharpness: number;
-  enhancement: "ai" | "standard";
+  enhancement: "ai" | "standard" | "text" | "deblur" | "face" | "restore" | "full";
+  restorationStrength?: number;
   scale: 1 | 2 | 3 | 4;
   crop?: CropTransform;
 }
@@ -19,7 +20,7 @@ export const DEFAULT_STUDIO_SETTINGS: StudioSettings = {
   contrast: 8,
   saturation: 6,
   sharpness: 25,
-  enhancement: "ai",
+  enhancement: "full",
   scale: 2,
 };
 
@@ -27,6 +28,7 @@ export interface StudioImage {
   blob: Blob;
   width: number;
   height: number;
+  detail?: string;
 }
 
 export interface StudioProgress {
@@ -36,6 +38,7 @@ export interface StudioProgress {
 
 export type StudioRequest =
   | { type: "inspect"; file: File }
+  | { type: "export-8k"; file: File }
   | { type: "edit-cutout"; file: File; cutout: Blob; strokes: MaskStroke[]; background: BackgroundFill }
   | { type: "process"; file: File; mode: StudioMode; settings: StudioSettings };
 

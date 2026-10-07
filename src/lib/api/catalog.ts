@@ -112,7 +112,7 @@ const tools: ToolDefinition[] = [
     seoTitle: "Free Image Enhancer",
     title: "Give small photos a clearer, larger finish.",
     description:
-      "Use free AI enhancement to improve soft, low-resolution photos and enlarge them by 2×, 3× or 4×. Fine-tune color and sharpness, compare the original and save a PNG. Your photo stays on your device; strong blur and missing detail may not be recoverable.",
+      "Reduce blur and enhance detail across the whole photo, from people and clothing to objects and backgrounds. Enlarge by 2×, 3× or 4×, compare the result and save it. Your photo stays on your device; deeply blurred or missing details may not be recoverable.",
     shortDescription: "Improve small photos with AI and 2×–4× upscaling.",
     icon: "enhance",
     featured: true,
@@ -120,10 +120,10 @@ const tools: ToolDefinition[] = [
     mode: "enhance-image",
     steps: [
       "Choose a small photo to improve, or use Quick adjustments for a larger image.",
-      "Choose AI or Quick adjustments, set the output scale and apply your changes.",
+      "Choose full-image enhancement, add face repair if needed, or use AI upscale for a faster result.",
       "Compare the result with the original and download the finished PNG.",
     ],
-    note: "Real-ESRGAN runs on your device and predicts detail rather than recovering the exact original. Check faces, text and fine textures. AI accepts up to 1 MP input; Quick adjustments handles larger photos. No credits, signup or watermark.",
+    note: "Full-image enhancement combines NAFNet deblurring with Real-ESRGAN. Face repair adds RestoreFormer++. AI accepts up to 1 MP input and estimates missing detail; compare faces, lettering and textures before saving. Quick adjustments handles larger photos. No credits, signup or watermark.",
   },
   {
     slug: "bulk-image-compressor",

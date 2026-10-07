@@ -12,8 +12,9 @@ const STATIC_LIMIT = 180;
 function isStaticAsset(url: URL): boolean {
   return url.origin === swScope.location.origin && !url.search && (
     url.pathname.startsWith("/_next/static/") ||
-    /^\/wasm\/ort-wasm-simd-threaded\.(?:wasm|mjs)$/.test(url.pathname) ||
+    /^\/wasm\/ort-wasm-simd-threaded(?:\.jsep)?\.(?:wasm|mjs)$/.test(url.pathname) ||
     /^\/codecs\/(?:mozjpeg|webp)_enc\.wasm$/.test(url.pathname) ||
+    /^\/ocr\/(?:paddle-worker\.js|ort-wasm-simd-threaded\.jsep\.(?:wasm|mjs)|PP-OCRv5_mobile_(?:det|rec)\.tar)$/.test(url.pathname) ||
     /^\/samples\/still-life-(?:original\.jpg|optimized\.webp)$/.test(url.pathname) ||
     /^\/(?:icons|brand)\/[^/]+\.(?:png|svg|ico)$/.test(url.pathname)
   );

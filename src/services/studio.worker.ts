@@ -186,13 +186,39 @@ async function processImage(request: Extract<StudioRequest, { type: "process" }>
   const width = bitmap.width * scale;
   const height = bitmap.height * scale;
   validateSize(width, height);
-  if (request.mode === "enhance-image" && settings.enhancement === "ai" && bitmap.width * bitmap.height > 1_000_000) {
-    throw new Error("Real-ESRGAN accepts up to 1 megapixel here. Resize your photo first, or choose Quick adjustments for larger images.");
+  if (request.mode === "enhance-image" && !["standard", "text"].includes(settings.enhancement) && bitmap.width * bitmap.height > 1_000_000) {
+    throw new Error("AI restoration accepts up to 1 megapixel here. Resize your photo first, or choose Quick adjustments for larger images.");
   }
   const output = canvas2d(width, height);
   output.context.imageSmoothingEnabled = true;
   output.context.imageSmoothingQuality = "high";
   output.context.drawImage(bitmap, 0, 0, width, height);
+  let detail: string | undefined;
+  if (request.mode === "enhance-image" && ["deblur", "face", "restore", "full"].includes(settings.enhancement)) {
+    const { deblurPhoto, restoreFaces } = await import("./studio-restoration");
+    const strength = Math.max(0, Math.min(1, (settings.restorationStrength ?? 75) / 100));
+    if (!Number.isFinite(strength)) throw new Error("Choose a valid restoration strength.");
+    let prepared: OffscreenCanvas | undefined;
+    try {
+      if (settings.enhancement !== "face") {
+        prepared = await deblurPhoto(bitmap, strength, (fraction, label) => progress(0.05 + fraction * 0.32, label));
+        output.context.clearRect(0, 0, width, height); output.context.drawImage(prepared, 0, 0, width, height);
+        detail = "NAFNet deblurring applied.";
+      }
+      if (settings.enhancement === "full" || settings.enhancement === "restore") {
+        const { restorePhoto } = await import("./studio-neural");
+        const enhanced = await restorePhoto(prepared ?? bitmap, scale, (fraction, label) => progress(0.37 + fraction * 0.3, label));
+        output.context.clearRect(0, 0, width, height);
+        output.context.drawImage(enhanced, 0, 0);
+        enhanced.width = enhanced.height = 1;
+        detail = "Full image processed: NAFNet deblurring + Real-ESRGAN detail enhancement across the entire frame.";
+      }
+      if (settings.enhancement === "face" || settings.enhancement === "restore") {
+        const count = await restoreFaces(prepared ?? bitmap, output.canvas, strength, (fraction, label) => progress(0.67 + fraction * 0.21, label), settings.enhancement === "face");
+        detail = `${detail ? detail + " " : ""}${count ? `Restored ${count} face${count === 1 ? "" : "s"} with RestoreFormer++. Review facial details before downloading.` : "No clear face detected; the deblurred photo is preserved."}`;
+      }
+    } finally { if (prepared) prepared.width = prepared.height = 1; }
+  }
   if (request.mode === "enhance-image" && settings.enhancement === "ai") {
     const { restorePhoto } = await import("./studio-neural");
     const restored = await restorePhoto(bitmap, scale, progress);
@@ -211,8 +237,19 @@ async function processImage(request: Extract<StudioRequest, { type: "process" }>
     mask.width = 1;
     mask.height = 1;
   } else {
-    progress(request.mode === "enhance-image" && settings.enhancement === "ai" ? 0.88 : 0.35, request.mode === "enhance-image" ? "Refining color, contrast and detail" : "Removing the connected background");
+    progress(request.mode === "enhance-image" && !["standard", "text"].includes(settings.enhancement) ? 0.88 : 0.35, request.mode === "enhance-image" ? "Refining color, contrast and detail" : "Removing the connected background");
     const pixels = output.context.getImageData(0, 0, width, height);
+    if (request.mode === "enhance-image" && ["face", "restore"].includes(settings.enhancement)) {
+      // Replace alpha instead of multiplying it: partially transparent source
+      // pixels must not become more transparent after face compositing.
+      const original = canvas2d(width, height);
+      original.context.imageSmoothingEnabled = true;
+      original.context.imageSmoothingQuality = "high";
+      original.context.drawImage(bitmap, 0, 0, width, height);
+      const sourceAlpha = original.context.getImageData(0, 0, width, height).data;
+      for (let at = 3; at < pixels.data.length; at += 4) pixels.data[at] = sourceAlpha[at]!;
+      original.canvas.width = original.canvas.height = 1;
+    }
     const result = request.mode === "enhance-image"
       ? enhancePixels(pixels.data, width, height, settings)
       : removeSolidBackground(pixels.data, width, height, settings.tolerance);
@@ -220,7 +257,7 @@ async function processImage(request: Extract<StudioRequest, { type: "process" }>
   }
   progress(0.94, "Creating your full-resolution PNG");
   const blob = await output.canvas.convertToBlob({ type: "image/png" });
-  return { blob, width, height };
+  return { blob, width, height, detail };
 }
 
 async function editCutout(request: Extract<StudioRequest, { type: "edit-cutout" }>, original: ImageBitmap): Promise<StudioImage> {
@@ -264,6 +301,22 @@ scope.onmessage = async (event: MessageEvent<StudioRequest>) => {
       preview.context.drawImage(bitmap, 0, 0, preview.canvas.width, preview.canvas.height);
       const blob = await preview.canvas.convertToBlob({ type: "image/png" });
       send({ type: "result", image: { blob, width: bitmap.width, height: bitmap.height } });
+    } else if (event.data.type === "export-8k") {
+      const ratio = 7680 / Math.max(bitmap.width, bitmap.height);
+      const width = Math.max(1, Math.round(bitmap.width * ratio));
+      const height = Math.max(1, Math.round(bitmap.height * ratio));
+      if (width * height > 60_000_000) throw new Error("This 8K export exceeds the memory limit.");
+      progress(0.3, "Enlarging the restored result to a 7,680-pixel long edge");
+      const output = canvas2d(width, height);
+      output.context.fillStyle = "#ffffff";
+      output.context.fillRect(0, 0, width, height);
+      output.context.imageSmoothingEnabled = true;
+      output.context.imageSmoothingQuality = "high";
+      output.context.drawImage(bitmap, 0, 0, width, height);
+      progress(0.75, "Encoding your high-resolution JPEG · larger size does not recover missing detail");
+      const blob = await output.canvas.convertToBlob({ type: "image/jpeg", quality: 0.95 });
+      output.canvas.width = output.canvas.height = 1;
+      send({ type: "result", image: { blob, width, height } });
     } else if (event.data.type === "edit-cutout") {
       send({ type: "result", image: await editCutout(event.data, bitmap) });
     } else {

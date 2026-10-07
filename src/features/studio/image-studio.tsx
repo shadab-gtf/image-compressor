@@ -15,6 +15,7 @@ import { DoodleIcon } from "@/components/ui/doodle-icon";
 import { formatBytes } from "@/lib/bytes";
 import { cn } from "@/lib/cn";
 import { runStudioOperation } from "@/services/studio-service";
+import { saveBlob } from "@/services/download-service";
 import { DEFAULT_CROP } from "@/types/editor";
 import { withExtension } from "@/lib/format";
 import { uniqueNames } from "@/lib/zip";
@@ -38,6 +39,7 @@ interface StudioResult extends StudioImage {
 
 const CutoutEditor = dynamic(() => import("./cutout-editor").then((module) => module.CutoutEditor), { loading: () => <div className="h-64 animate-pulse rounded-3xl bg-surface-3" aria-label="Loading cutout editor" /> });
 const CropEditor = dynamic(() => import("./crop-editor").then((module) => module.CropEditor), { loading: () => <div className="h-64 animate-pulse rounded-3xl bg-surface-3" aria-label="Loading crop editor" /> });
+const TextRestoration = dynamic(() => import("./text-restoration").then(module => module.TextRestoration), { loading: () => <div className="h-32 animate-pulse rounded-3xl bg-surface-3" aria-label="Loading text restoration" /> });
 
 const checkerboard = {
   backgroundColor: "var(--sf-surface)",
@@ -161,7 +163,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
       if (removal) { setBaseCutout(image); setEditing(false); }
       setPosition(50);
       setNotice(
-        "Your image is ready. Compare the result and download your PNG.",
+        image.detail ?? "Your image is ready. Compare the result and download your PNG.",
       );
     } catch (cause) {
       if (!controller.signal.aborted)
@@ -176,6 +178,21 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
         setProgress(null);
       }
     }
+  }
+
+  async function export8k() {
+    if (!source || !result || busy) return;
+    const controller = new AbortController();
+    active.current = controller;
+    setProgress({ fraction: 0, label: "Preparing 8K export" });
+    setError(null);
+    try {
+      const image = await runStudioOperation({ type: "export-8k", file: new File([result.blob], "restored.png", { type: "image/png" }) }, controller.signal, setProgress);
+      if (controller.signal.aborted) return;
+      saveBlob(image.blob, withExtension(source.file.name, "jpg"));
+      setNotice(`Downloaded ${image.width} × ${image.height} JPEG. 8K export enlarges the restored result; it does not recover lost detail.`);
+    } catch (cause) { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "8K export failed. Try the normal PNG download."); }
+    finally { if (active.current === controller) { active.current = null; setProgress(null); } }
   }
 
   function changeSetting<K extends keyof StudioSettings>(
@@ -563,23 +580,33 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
         ) : cropping ? (
           <p className="text-sm leading-6 text-muted">Choose an aspect ratio, drag the crop corners, then rotate or straighten your image. Save the result as a PNG. Your original stays untouched.</p>
         ) : (
-          <fieldset disabled={busy} className="space-y-3">
+          <fieldset disabled={busy} className="min-w-0 space-y-3">
             <legend className="sr-only">Enhancement controls</legend>
             <div className="space-y-2 text-sm font-medium text-ink-2">
               <label htmlFor={`${id}-enhancement`} className="block">Enhancement method</label>
               <select id={`${id}-enhancement`} className="h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink"
                 value={settings.enhancement}
-                onChange={(event) => changeSetting("enhancement", event.target.value === "ai" ? "ai" : "standard")}
+                onChange={(event) => { const value = event.target.value; if (value === "ai" || value === "text" || value === "standard" || value === "deblur" || value === "face" || value === "restore" || value === "full") changeSetting("enhancement", value); }}
               >
-                <option value="ai">Real-ESRGAN restoration</option>
+                <option value="full">Full image — deblur + enhance</option>
+                <option value="restore">Full image + face repair</option>
+                <option value="ai">AI upscale — faster</option>
+                <option value="deblur">Motion deblur — NAFNet</option>
+                <option value="face">Restore faces — RestoreFormer++</option>
                 <option value="standard">Quick adjustments</option>
+                <option value="text">Screenshot & text — fast</option>
               </select>
             </div>
             <p className="text-xs leading-5 text-muted">
               {settings.enhancement === "ai"
                 ? "Restore small, soft photos with Real-ESRGAN General x4v3. Runs locally; up to 1 MP input. First use loads about 5 MB of model data plus the engine. Strong blur may remain and AI can change fine details."
-                : "Fast color and sharpening controls. Enlarging makes more pixels but does not reconstruct missing detail."}
+                : settings.enhancement === "deblur" ? "Reduce camera shake and motion blur with NAFNet. First use downloads 92 MB plus the engine. Up to 1 MP input; works locally with GPU acceleration where available. Severe defocus may remain."
+                : settings.enhancement === "face" ? "Automatically find and restore up to eight faces with RestoreFormer++. First use downloads 75 MB plus the engine. AI can change facial details: start at a lower strength and compare closely."
+                : settings.enhancement === "full" ? "Deblur the whole photo with NAFNet, then enhance detail across the entire frame with Real-ESRGAN: people, clothes, objects and background. Up to 1 MP input. Downloads about 97 MB of models plus the engine once. This is more thorough and takes longer than AI upscale."
+                : settings.enhancement === "restore" ? "Deblur and enhance the whole photo, then repair detected faces. Uses NAFNet, Real-ESRGAN and RestoreFormer++ (about 171 MB plus the engine). A desktop with GPU support is recommended. Facial details are estimates and can change."
+                : settings.enhancement === "text" ? "Fast enlargement for screenshots and posters, without photo AI changing letter shapes. After enhancing, read words with PaddleOCR and review any text you want to rebuild." : "Fast color and sharpening controls. Enlarging makes more pixels but does not reconstruct missing detail."}
             </p>
+            {["deblur", "face", "restore", "full"].includes(settings.enhancement) && <StudioSlider id={`${id}-restoration-strength`} label="Restoration strength" value={settings.restorationStrength ?? 75} min={20} max={100} onChange={value => changeSetting("restorationStrength", value)} />}
             <StudioSlider
               id={`${id}-contrast`}
               label="Contrast"
@@ -787,7 +814,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
         </div>
       </div>
       {removal && source && baseCutout && <div className="col-span-full px-4 pb-6 sm:px-6">
-        {!editing && <Button variant="secondary" iconLeft={<DoodleIcon name="sliders" size={20} />} onClick={() => setEditing(true)}>Refine edges & change background</Button>}
+        {!editing && <Button className="h-auto min-h-11 max-w-full whitespace-normal py-3 text-center" variant="secondary" iconLeft={<DoodleIcon name="sliders" size={20} />} onClick={() => setEditing(true)}>Refine edges & change background</Button>}
         {editing && <CutoutEditor key={source.url + baseCutout.blob.size} file={source.file} preview={source.blob} cutout={baseCutout} onApply={(image) => {
           releaseUrl(result?.url);
           setResult({ ...image, url: createUrl(image.blob, withExtension(source.file.name, "png")), settingsKey });
@@ -795,6 +822,16 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
         }} />}
       </div>}
       {cropping && source && <div className="col-span-full overflow-hidden border-t border-line p-6"><CropEditor url={source.url} width={source.width} height={source.height} value={settings.crop ?? DEFAULT_CROP} onChange={(value) => changeSetting("crop", value)} /></div>}
+      {!removal && !cropping && source && result && <div className="col-span-full p-6"><TextRestoration key={source.url} source={source.blob} output={result} onApply={image => {
+        releaseUrl(result.url);
+        setResult({ ...image, url: createUrl(image.blob, withExtension(source.file.name, "png")), settingsKey });
+        setNotice("Reviewed text applied. Compare the result before downloading.");
+      }} /></div>}
+      {!removal && !cropping && result && <section className="col-span-full space-y-3 border-t border-line p-5 sm:p-6" aria-label="8K export">
+        <h2 className="text-lg font-semibold">High-resolution export</h2>
+        <p className="text-sm text-muted">Export a JPEG with a 7,680-pixel long edge, keeping your image’s proportions. This enlarges your restored result; it does not recreate missing detail. Transparency becomes white. Desktop recommended: this can need several hundred megabytes of memory.</p>
+        <Button disabled={busy || stale} onClick={() => void export8k()} iconLeft={<DoodleIcon name="download" size={18} />}>Download 8K JPEG</Button>
+      </section>}
     </div>
   );
 }

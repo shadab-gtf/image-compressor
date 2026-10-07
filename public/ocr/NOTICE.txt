@@ -1,0 +1,1 @@
+PaddleOCR.js 0.4.2, Apache-2.0. PP-OCRv5 mobile detection and recognition from PaddlePaddle official model assets. Worker embeds ONNX Runtime 1.24.3, OpenCV and third-party notices in its source. Models and runtime are self-hosted; uploaded images never leave the device.

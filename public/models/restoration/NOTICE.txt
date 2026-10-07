@@ -1,0 +1,7 @@
+NAFNet: MIT, Megvii Research; OpenCV Zoo export at 47534e27c9851bb1128ccc0102f1145e27f23f98.
+YuNet: MIT, Shiqi Yu and OpenCV Zoo, same pinned revision.
+RestoreFormer++: Apache-2.0, Zhouxia Wang et al.
+https://github.com/wzhouxiff/RestoreFormerPlusPlus
+Browser int8-weight export by Saimon8420 at revision 9e5912e04026135bc1a7c8557a2da66f521a7b8e.
+https://huggingface.co/Saimon8420/restoreformer-pp-web
+Original model bytes are split without modification for static hosting. SHA-256 verification is in scripts/setup-restoration.ts.

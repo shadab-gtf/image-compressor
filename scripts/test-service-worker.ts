@@ -202,9 +202,10 @@ test("the local AI engine stays available offline after its first use", async ()
     if (!online) throw new TypeError("offline");
     return new Response("wasm bytes");
   });
-  await worker.fetch(new Request(`${ORIGIN}/wasm/ort-wasm-simd-threaded.wasm`));
+  const engines = ["ort-wasm-simd-threaded.wasm", "ort-wasm-simd-threaded.jsep.wasm", "ort-wasm-simd-threaded.jsep.mjs"];
+  for (const engine of engines) await worker.fetch(new Request(`${ORIGIN}/wasm/${engine}`));
   online = false;
-  assert.equal(await (await worker.fetch(new Request(`${ORIGIN}/wasm/ort-wasm-simd-threaded.wasm`)))?.text(), "wasm bytes");
+  for (const engine of engines) assert.equal(await (await worker.fetch(new Request(`${ORIGIN}/wasm/${engine}`)))?.text(), "wasm bytes");
 });
 
 test("cached worker responses preserve the request bootstrap fragment", async () => {
