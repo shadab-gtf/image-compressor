@@ -1,0 +1,4 @@
+The still-life demonstration image was generated for ShrinkFox using OpenAI image generation.
+The optimized WebP is an actual export from ShrinkFox's browser compression engine.
+Run npm run showcase against a running local app to reproduce the conversion and displayed file sizes.
+Sample savings are illustrative, not a promise for other images.

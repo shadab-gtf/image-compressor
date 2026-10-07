@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none" role="img" aria-label="ShrinkFox">
+  <defs><clipPath id="clip-fav"><path d="M70 92h116a26 26 0 0 1 26 26v60a26 26 0 0 1-26 26H70a26 26 0 0 1-26-26v-60a26 26 0 0 1 26-26z"/></clipPath></defs>
+  <g>
+    <path d="M44 160V40q0-16 15-9c26 13 49 45 65 129z" fill="#E8652B"/>
+    <path d="M212 160V40q0-16-15-9c-26 13-49 45-65 129z" fill="#E8652B"/>
+    <path d="M70 92h116a26 26 0 0 1 26 26v60a26 26 0 0 1-26 26H70a26 26 0 0 1-26-26v-60a26 26 0 0 1 26-26z" fill="#E8652B"/>
+    <g clip-path="url(#clip-fav)">
+      <path d="M-20 144C40 150 90 166 108 204L-20 204Z" fill="#FFE6CC"/>
+      <path d="M276 144C216 150 166 166 148 204L276 204Z" fill="#FFE6CC"/>
+    </g>
+    <circle cx="100" cy="162" r="11" fill="#141414"/>
+    <circle cx="156" cy="162" r="11" fill="#141414"/>
+    <path d="M110 200h36l-15 37a4 4 0 0 1-6 0z" fill="#141414"/>
+  </g>
+</svg>

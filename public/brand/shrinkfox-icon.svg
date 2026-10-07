@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none" role="img" aria-label="ShrinkFox">
+  <defs><linearGradient id="pg-icon" x1="128" y1="0" x2="128" y2="256" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F0803E"/><stop offset="1" stop-color="#C94F18"/></linearGradient></defs>
+  <rect width="256" height="256" rx="60" fill="url(#pg-icon)"/><defs><clipPath id="clip-icon"><path d="M70 92h116a26 26 0 0 1 26 26v60a26 26 0 0 1-26 26H70a26 26 0 0 1-26-26v-60a26 26 0 0 1 26-26z"/></clipPath></defs>
+  <g transform="translate(128 132) scale(.68) translate(-128 -128)">
+    <path d="M44 160V40q0-16 15-9c26 13 49 45 65 129z" fill="#FFFFFF"/>
+    <path d="M212 160V40q0-16-15-9c-26 13-49 45-65 129z" fill="#FFFFFF"/>
+    <path d="M70 92h116a26 26 0 0 1 26 26v60a26 26 0 0 1-26 26H70a26 26 0 0 1-26-26v-60a26 26 0 0 1 26-26z" fill="#FFFFFF"/>
+    <g clip-path="url(#clip-icon)">
+      <path d="M-20 144C40 150 90 166 108 204L-20 204Z" fill="#FFD9BC"/>
+      <path d="M276 144C216 150 166 166 148 204L276 204Z" fill="#FFD9BC"/>
+    </g>
+    <circle cx="100" cy="162" r="11" fill="#C94F18"/>
+    <circle cx="156" cy="162" r="11" fill="#C94F18"/>
+    <path d="M110 200h36l-15 37a4 4 0 0 1-6 0z" fill="#C94F18"/>
+  </g>
+</svg>

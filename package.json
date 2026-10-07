@@ -2,18 +2,43 @@
   "name": "shrinkfox",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.20.0"
+  },
   "scripts": {
+    "predev": "npm run pwa:build",
+    "pwa:build": "node --experimental-strip-types scripts/build-service-worker.ts",
     "dev": "next dev",
+    "prebuild": "npm run setup:studio && npm run pwa:build",
     "build": "next build",
+    "postbuild": "node --experimental-strip-types scripts/build-service-worker.ts --production-assets",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "brand": "node --experimental-strip-types scripts/build-brand-assets.ts",
+    "shot": "node --experimental-strip-types scripts/screenshot.ts",
+    "test:images": "node --experimental-strip-types scripts/make-test-images.ts",
+    "e2e": "node --experimental-strip-types scripts/e2e.ts",
+    "setup:studio": "node --experimental-strip-types scripts/setup-studio.ts",
+    "test:engines": "node --experimental-strip-types scripts/test-engines.ts",
+    "test:studio": "node --experimental-strip-types scripts/test-studio.ts",
+    "e2e:studio": "node --experimental-strip-types scripts/studio-e2e.ts",
+    "test:pwa": "node --experimental-strip-types scripts/test-service-worker.ts",
+    "test:site": "node --experimental-strip-types scripts/test-site.ts",
+    "test:seo": "node --experimental-strip-types scripts/test-seo.ts",
+    "showcase": "node --experimental-strip-types scripts/generate-showcase.ts",
+    "check": "npm run lint && npm run typecheck && npm run test:engines && npm run test:studio"
   },
   "dependencies": {
+    "motion": "^14.0.0",
     "next": "16.4.0",
+    "onnxruntime-web": "1.30.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

@@ -1,0 +1,5 @@
+ONNX Runtime Web 1.30.0 — MIT License
+Copyright (c) Microsoft Corporation. All rights reserved.
+https://github.com/microsoft/onnxruntime
+Runtime artifacts copied without modification from the exact locked npm dependency.
+See LICENSE and ThirdPartyNotices.txt. Use the same version for JavaScript and WebAssembly artifacts.

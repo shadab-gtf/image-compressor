@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 200" fill="none" role="img" aria-label="ShrinkFox">
+  <g transform="translate(0 -12) scale(.84)">
+  <defs><clipPath id="clip-wm"><path d="M70 92h116a26 26 0 0 1 26 26v60a26 26 0 0 1-26 26H70a26 26 0 0 1-26-26v-60a26 26 0 0 1 26-26z"/></clipPath></defs>
+  <g>
+    <path d="M44 160V40q0-16 15-9c26 13 49 45 65 129z" fill="#E8652B"/>
+    <path d="M212 160V40q0-16-15-9c-26 13-49 45-65 129z" fill="#E8652B"/>
+    <path d="M70 92h116a26 26 0 0 1 26 26v60a26 26 0 0 1-26 26H70a26 26 0 0 1-26-26v-60a26 26 0 0 1 26-26z" fill="#E8652B"/>
+    <g clip-path="url(#clip-wm)">
+      <path d="M-20 144C40 150 90 166 108 204L-20 204Z" fill="#FFE6CC"/>
+      <path d="M276 144C216 150 166 166 148 204L276 204Z" fill="#FFE6CC"/>
+    </g>
+    <circle cx="100" cy="162" r="11" fill="#141414"/>
+    <circle cx="156" cy="162" r="11" fill="#141414"/>
+    <path d="M110 200h36l-15 37a4 4 0 0 1-6 0z" fill="#141414"/>
+  </g>
+</g>
+  <text x="248" y="134" font-family="Geist,Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+        font-size="124" font-weight="600" letter-spacing="-5" fill="#141414">Shrink<tspan fill="#E8652B">Fox</tspan></text>
+</svg>

@@ -1,0 +1,531 @@
+@import "tailwindcss";
+
+/* Dark mode is attribute-driven, not media-driven, so the in-app toggle wins.
+   The resolved value is written to <html data-theme> before first paint. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ===========================================================================
+   ShrinkFox design tokens
+
+   One warm palette, two themes. Every surface, border and text colour below is
+   semantic, so components never hardcode a colour and never need a `dark:`
+   override — swapping [data-theme] re-tints the whole product at once. That is
+   what keeps the colour story consistent across the entire product.
+   =========================================================================== */
+
+:root {
+  color-scheme: light;
+  --sf-mobile-nav-height: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  --sf-page-gutter: 1rem;
+  --font-geist-mono: ui-monospace;
+
+  /* Base */
+  --sf-bg: #f8f7f3;
+  --sf-bg-tint: #efebe4;
+  --sf-surface: #ffffff;
+  --sf-surface-2: #faf8f5;
+  --sf-surface-3: #f4f1ec;
+
+  /* Ink — warm neutrals, never pure grey */
+  --sf-ink: #1a1613;
+  --sf-ink-2: #4a423b;
+  --sf-muted: #6c655c;
+  --sf-faint: #766d62;
+
+  /* Lines */
+  --sf-border: #e8e2d9;
+  --sf-border-strong: #d8d0c4;
+
+  /* Accent */
+  --sf-accent: #bd4818;
+  --sf-accent-hover: #ad4014;
+  --sf-accent-deep: #c04d18;
+  --sf-accent-soft: #fdeadd;
+  --sf-accent-softer: #fff5ee;
+  --sf-on-accent: #ffffff;
+
+  /* Status */
+  --sf-success: #1f7a55;
+  --sf-success-soft: #e2f3eb;
+  --sf-warn: #a66a12;
+  --sf-warn-soft: #fbf0db;
+  --sf-danger: #b4341f;
+  --sf-danger-soft: #fdeae6;
+
+  /* The signature surface wash: white at the top, warm at the bottom.
+     This is what gives every card its soft, lit-from-below feel. */
+  --sf-wash: linear-gradient(180deg, #ffffff 0%, #fffaf6 46%, #fef0e6 100%);
+  --sf-wash-accent: linear-gradient(
+    180deg,
+    #fffaf7 0%,
+    #ffeedf 55%,
+    #ffe2cd 100%
+  );
+
+  /* Warm-tinted ambient shadows. Grey shadows read cold against this palette. */
+  --sf-shadow-xs: 0 1px 2px rgba(74, 48, 28, 0.05);
+  --sf-shadow-sm:
+    0 1px 2px rgba(74, 48, 28, 0.05), 0 2px 6px -2px rgba(74, 48, 28, 0.05);
+  --sf-shadow-md:
+    0 2px 4px -1px rgba(74, 48, 28, 0.05),
+    0 8px 20px -6px rgba(74, 48, 28, 0.09);
+  --sf-shadow-lg:
+    0 4px 8px -2px rgba(74, 48, 28, 0.05),
+    0 20px 40px -12px rgba(74, 48, 28, 0.13);
+  --sf-shadow-xl:
+    0 8px 16px -4px rgba(74, 48, 28, 0.06),
+    0 36px 72px -20px rgba(74, 48, 28, 0.18);
+  --sf-shadow-accent: 0 6px 16px -4px rgba(232, 101, 43, 0.38);
+  --sf-ring: 0 0 0 3px rgba(232, 101, 43, 0.32);
+
+  /* Cheek fill inside the brand mark. Warmer than --sf-accent-soft, which is
+     a UI surface tint and too pale to read inside the logo. */
+  --sf-mark-cheek: #ffe6cc;
+  --sf-mark-nose: #141414;
+
+  /* Inner highlight that sells the "soft solid" look on a light surface. */
+  --sf-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --sf-bg: #100f0e;
+  --sf-bg-tint: #171513;
+  --sf-surface: #1a1816;
+  --sf-surface-2: #211e1b;
+  --sf-surface-3: #282420;
+
+  --sf-ink: #f6f2ed;
+  --sf-ink-2: #cfc7bd;
+  --sf-muted: #978d81;
+  --sf-faint: #9b9082;
+
+  --sf-border: #2b2724;
+  --sf-border-strong: #3b3630;
+
+  /* Lifted so it keeps AA contrast on a near-black surface. */
+  --sf-accent: #ff7a42;
+  --sf-accent-hover: #ff8d5c;
+  --sf-accent-deep: #e8652b;
+  --sf-accent-soft: #2c1a10;
+  --sf-accent-softer: #211411;
+  --sf-on-accent: #1a0d06;
+
+  --sf-success: #4ec08c;
+  --sf-success-soft: #13251d;
+  --sf-warn: #e0a850;
+  --sf-warn-soft: #251c0f;
+  --sf-danger: #ff7a66;
+  --sf-danger-soft: #2a1512;
+
+  --sf-wash: linear-gradient(180deg, #221f1c 0%, #1d1a18 46%, #231a14 100%);
+  --sf-wash-accent: linear-gradient(
+    180deg,
+    #2a211b 0%,
+    #2e1f16 55%,
+    #352116 100%
+  );
+
+  --sf-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --sf-shadow-sm:
+    0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 6px -2px rgba(0, 0, 0, 0.44);
+  --sf-shadow-md:
+    0 2px 4px -1px rgba(0, 0, 0, 0.5), 0 8px 20px -6px rgba(0, 0, 0, 0.56);
+  --sf-shadow-lg:
+    0 4px 8px -2px rgba(0, 0, 0, 0.5), 0 20px 40px -12px rgba(0, 0, 0, 0.64);
+  --sf-shadow-xl:
+    0 8px 16px -4px rgba(0, 0, 0, 0.5), 0 36px 72px -20px rgba(0, 0, 0, 0.72);
+  --sf-shadow-accent: 0 6px 16px -4px rgba(255, 122, 66, 0.3);
+  --sf-ring: 0 0 0 3px rgba(255, 122, 66, 0.36);
+
+  --sf-mark-cheek: #ffd9bc;
+  --sf-mark-nose: #ffffff;
+  --sf-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+@theme inline {
+  --color-bg: var(--sf-bg);
+  --color-bg-tint: var(--sf-bg-tint);
+  --color-surface: var(--sf-surface);
+  --color-surface-2: var(--sf-surface-2);
+  --color-surface-3: var(--sf-surface-3);
+
+  --color-ink: var(--sf-ink);
+  --color-ink-2: var(--sf-ink-2);
+  --color-muted: var(--sf-muted);
+  --color-faint: var(--sf-faint);
+
+  --color-line: var(--sf-border);
+  --color-line-strong: var(--sf-border-strong);
+
+  --color-accent: var(--sf-accent);
+  --color-accent-hover: var(--sf-accent-hover);
+  --color-accent-deep: var(--sf-accent-deep);
+  --color-accent-soft: var(--sf-accent-soft);
+  --color-accent-softer: var(--sf-accent-softer);
+  --color-on-accent: var(--sf-on-accent);
+
+  --color-success: var(--sf-success);
+  --color-success-soft: var(--sf-success-soft);
+  --color-warn: var(--sf-warn);
+  --color-warn-soft: var(--sf-warn-soft);
+  --color-danger: var(--sf-danger);
+  --color-danger-soft: var(--sf-danger-soft);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-2xl: 30px;
+  --radius-3xl: 38px;
+
+  --shadow-xs: var(--sf-shadow-xs);
+  --shadow-sm: var(--sf-shadow-sm);
+  --shadow-md: var(--sf-shadow-md);
+  --shadow-lg: var(--sf-shadow-lg);
+  --shadow-xl: var(--sf-shadow-xl);
+  --shadow-accent: var(--sf-shadow-accent);
+
+  /* Set by next/font/local in the root layout. */
+  --font-sans: var(--font-pin-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* ===========================================================================
+   Base
+   =========================================================================== */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Stops iOS rubber-banding from revealing the white page behind the app. */
+  background: var(--sf-bg);
+}
+
+body {
+  background: var(--sf-bg);
+  color: var(--sf-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* Tabular figures everywhere: file sizes and dimensions must not jitter as
+     they count up during processing. */
+  font-variant-numeric: tabular-nums;
+  overscroll-behavior-y: none;
+}
+
+/* Full-width shells share one responsive gutter; prose keeps its own measure. */
+@utility sf-page-shell {
+  width: 100%;
+  padding-inline: max(var(--sf-page-gutter), env(safe-area-inset-left, 0px))
+    max(var(--sf-page-gutter), env(safe-area-inset-right, 0px));
+}
+
+.sf-mobile-nav {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 45;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-height: var(--sf-mobile-nav-height);
+  padding: 0.4rem max(0.5rem, env(safe-area-inset-right, 0px))
+    max(0.4rem, env(safe-area-inset-bottom, 0px))
+    max(0.5rem, env(safe-area-inset-left, 0px));
+  border-top: 1px solid var(--sf-border);
+  background: var(--sf-surface);
+  box-shadow: 0 -4px 24px rgb(26 22 19 / 4%);
+}
+
+@media (width < 48rem) {
+  body {
+    padding-bottom: var(--sf-mobile-nav-height);
+  }
+
+  html {
+    scroll-padding-bottom: calc(var(--sf-mobile-nav-height) + 1rem);
+  }
+
+  input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@media (width >= 48rem) {
+  :root {
+    --sf-page-gutter: 1.5rem;
+  }
+
+  .sf-mobile-nav {
+    display: none;
+  }
+}
+
+@media (width >= 80rem) {
+  :root {
+    --sf-page-gutter: 2rem;
+  }
+}
+
+@media (width >= 96rem) {
+  :root {
+    --sf-page-gutter: 3rem;
+  }
+}
+
+button,
+a,
+input,
+select,
+textarea,
+summary {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@utility sf-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--sf-accent-deep);
+}
+
+@utility sf-heading {
+  font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+  font-weight: 650;
+  line-height: 1.18;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.sf-comparison-range:focus-visible {
+  outline: 3px solid var(--sf-accent);
+  outline-offset: -4px;
+  background: transparent;
+}
+
+html {
+  scroll-padding-top: 6rem;
+}
+
+::selection {
+  background: var(--sf-accent);
+  color: var(--sf-on-accent);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--sf-ring);
+}
+
+/* Native controls should inherit the warm palette rather than the OS blue. */
+input,
+textarea,
+select,
+button {
+  font: inherit;
+  accent-color: var(--sf-accent);
+}
+
+/* ===========================================================================
+   Surface primitives
+
+   `sf-card` is the product's signature container: large radius, hairline
+   border, warm wash, soft ambient shadow and a top bevel highlight.
+   =========================================================================== */
+
+@utility sf-card {
+  background: var(--sf-wash);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--sf-shadow-lg), var(--sf-bevel);
+}
+
+@utility sf-card-flat {
+  background: var(--sf-surface);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--sf-shadow-sm);
+}
+
+/* Hand-inked illustrations animate only in response to an interaction. */
+.sf-doodle-badge {
+  border-radius: 46% 54% 59% 41% / 54% 42% 58% 46%;
+  background: var(--sf-surface-3);
+}
+
+.sf-doodle-badge > svg {
+  transform-origin: 50% 65%;
+  transition: transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.sf-interactive-card {
+  transition:
+    transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 220ms ease,
+    box-shadow 260ms ease,
+    background-color 220ms ease;
+}
+
+.sf-button-motion {
+  transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .sf-interactive-card:hover,
+  .sf-interactive-card:focus-visible {
+    transform: translateY(-3px);
+    border-color: var(--sf-border-strong);
+    box-shadow: var(--sf-shadow-md);
+  }
+
+  .sf-interactive-card:hover .sf-doodle-badge > svg,
+  .sf-interactive-card:focus-visible .sf-doodle-badge > svg,
+  .sf-usecase:hover .sf-doodle-badge > svg,
+  .sf-usecase:focus-within .sf-doodle-badge > svg {
+    transform: translateY(-2px) rotate(-5deg);
+  }
+
+  .sf-button-motion:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body,
+  header,
+  footer,
+  .sf-mobile-nav,
+  .sf-doodle-badge {
+    transition:
+      background-color 220ms ease,
+      color 220ms ease,
+      border-color 220ms ease;
+  }
+
+  .sf-settings-sheet[open] {
+    animation: sf-sheet-enter 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  details[open] > .sf-menu-panel {
+    animation: sf-menu-enter 180ms ease-out;
+  }
+
+  .sf-interactive-card:active {
+    transform: translateY(0) scale(0.995);
+  }
+
+  .sf-button-motion:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+  }
+}
+
+@keyframes sf-sheet-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sf-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility sf-card-accent {
+  background: var(--sf-wash-accent);
+  border: 1px solid color-mix(in srgb, var(--sf-accent) 18%, transparent);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--sf-shadow-lg), var(--sf-bevel);
+}
+
+@utility sf-inset {
+  background: var(--sf-surface-3);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--radius-lg);
+}
+
+/* ===========================================================================
+   Motion
+   =========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Hide scrollbars on horizontal rails without losing scrollability. */
+@utility sf-no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Range input.
+   Styled through a utility rather than per-component classes because the
+   vendor pseudo-elements differ between engines and must stay in lockstep. */
+@utility sf-range {
+  width: 100%;
+  height: 24px;
+  cursor: pointer;
+  appearance: none;
+  background: transparent;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  &::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--sf-track, var(--sf-border-strong));
+  }
+  &::-webkit-slider-thumb {
+    appearance: none;
+    margin-top: -7px;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--sf-accent);
+    border: 2px solid var(--sf-surface);
+    box-shadow: var(--sf-shadow-md);
+    transition: transform 0.15s ease;
+  }
+  &:active::-webkit-slider-thumb {
+    transform: scale(1.12);
+  }
+
+  &::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--sf-track, var(--sf-border-strong));
+  }
+  &::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--sf-surface);
+    border-radius: 999px;
+    background: var(--sf-accent);
+    box-shadow: var(--sf-shadow-md);
+  }
+}
