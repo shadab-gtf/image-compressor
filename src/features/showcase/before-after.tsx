@@ -12,6 +12,7 @@ export interface BeforeAfterProps {
   width: number;
   height: number;
   eager?: boolean;
+  sizes?: string;
 }
 
 export function BeforeAfter({
@@ -21,6 +22,7 @@ export function BeforeAfter({
   width,
   height,
   eager = false,
+  sizes = "(max-width: 768px) 94vw, 550px",
 }: BeforeAfterProps) {
   const [position, setPosition] = useState(50);
   const [dragging, setDragging] = useState(false);
@@ -43,8 +45,7 @@ export function BeforeAfter({
         alt={`After: ${alt}`}
         width={width}
         height={height}
-        sizes="(max-width: 768px) 94vw, 550px"
-        unoptimized
+        sizes={sizes}
         loading={eager ? "eager" : "lazy"}
         fetchPriority={eager ? "high" : undefined}
         className="absolute inset-0 size-full object-cover"
@@ -65,8 +66,7 @@ export function BeforeAfter({
           alt={`Before: ${alt}`}
           width={width}
           height={height}
-          sizes="(max-width: 768px) 94vw, 550px"
-          unoptimized
+          sizes={sizes}
           loading={eager ? "eager" : "lazy"}
           className="size-full object-cover"
         />

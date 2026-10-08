@@ -58,6 +58,7 @@ export const PUBLIC_PATHS = [
   "/resize-image",
   "/crop-image",
   "/export-recipes",
+  "/smart-draw",
   "/convert-image",
   "/bulk-image-compressor",
   "/bulk-image-resizer",

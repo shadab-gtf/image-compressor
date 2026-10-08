@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getCatalog, getTool } from "@/lib/api/catalog";
 import { createPageMetadata } from "@/lib/site";
 import { ToolSection } from "@/components/sections/tool-section";
+import { getDrawingSymbols } from "@/lib/api/drawing";
 
 export const ensureStatic = "navigation";
 export function generateStaticParams() {
@@ -44,5 +45,6 @@ export default async function ToolPage({
   const { tool: slug } = await params;
   const tool = getTool(slug);
   if (!tool) notFound();
-  return <ToolSection tool={tool} />;
+  const symbols = slug === "smart-draw" ? getDrawingSymbols() : undefined;
+  return <ToolSection tool={tool} symbols={symbols} />;
 }

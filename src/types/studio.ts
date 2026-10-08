@@ -20,8 +20,8 @@ export const DEFAULT_STUDIO_SETTINGS: StudioSettings = {
   contrast: 8,
   saturation: 6,
   sharpness: 25,
-  enhancement: "full",
-  scale: 2,
+  enhancement: "standard",
+  scale: 1,
 };
 
 export interface StudioImage {
@@ -29,6 +29,7 @@ export interface StudioImage {
   width: number;
   height: number;
   detail?: string;
+  processing?: "lightweight";
 }
 
 export interface StudioProgress {
@@ -37,7 +38,7 @@ export interface StudioProgress {
 }
 
 export type StudioRequest =
-  | { type: "inspect"; file: File }
+  | { type: "inspect"; file: File; mode?: StudioMode }
   | { type: "export-8k"; file: File }
   | { type: "edit-cutout"; file: File; cutout: Blob; strokes: MaskStroke[]; background: BackgroundFill }
   | { type: "process"; file: File; mode: StudioMode; settings: StudioSettings };

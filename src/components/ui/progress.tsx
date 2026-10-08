@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/cn";
 import type { ReactNode } from "react";
 
@@ -17,6 +17,7 @@ export function ProgressBar({
   tone?: "accent" | "success";
 }) {
   const percent = Math.round(Math.max(0, Math.min(1, value)) * 100);
+  const reduced = useReducedMotion();
   return (
     <div
       role="progressbar"
@@ -30,7 +31,7 @@ export function ProgressBar({
         className={cn("h-full rounded-full", tone === "accent" ? "bg-accent" : "bg-success")}
         initial={false}
         animate={{ width: `${percent}%` }}
-        transition={{ type: "spring", stiffness: 180, damping: 28 }}
+        transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 180, damping: 28 }}
       />
     </div>
   );
@@ -42,6 +43,7 @@ export function ProgressBar({
  * it never reads as "stuck at 0%".
  */
 export function IndeterminateBar({ label }: { label: string }) {
+  const reduced = useReducedMotion();
   return (
     <div
       role="progressbar"
@@ -50,7 +52,7 @@ export function IndeterminateBar({ label }: { label: string }) {
     >
       <motion.div
         className="h-full w-1/3 rounded-full bg-accent"
-        animate={{ x: ["-100%", "300%"] }}
+        animate={reduced ? { x: "100%" } : { x: ["-100%", "300%"] }}
         transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
       />
     </div>

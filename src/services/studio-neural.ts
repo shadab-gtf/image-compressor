@@ -1,4 +1,5 @@
 export type Progress = (fraction: number, label: string) => void;
+import { validateNeuralPixels } from "./neural-quality";
 
 export async function loadBytes(path: string, size: number, report: Progress, start: number, span: number): Promise<Uint8Array> {
   const url = new URL(path, self.location.origin).href;
@@ -62,7 +63,6 @@ function canvas(width: number, height: number) {
 
 /** Real-ESRGAN General x4v3, padded fixed-size tiles; all computation is in a disposable worker. */
 export async function restorePhoto(bitmap: ImageBitmap | OffscreenCanvas, scale: number, report: Progress): Promise<OffscreenCanvas> {
-  if (bitmap.width * bitmap.height > 1_000_000) throw new Error("Real-ESRGAN accepts up to 1 megapixel here. Resize your image first, or use Quick adjustments for larger photos.");
   const ort = await runtime();
   const model = await loadBytes("/models/realesrgan/real_esrgan_general_x4v3.onnx", 161087, report, 0.06, 0.02);
   const weights = await loadBytes("/models/realesrgan/real_esrgan_general_x4v3.data", 4836096, report, 0.08, 0.22);
@@ -111,6 +111,13 @@ export async function restorePhoto(bitmap: ImageBitmap | OffscreenCanvas, scale:
           predictions = await session.run({ [input]: tensor });
           const prediction = predictions[session.outputNames[0] ?? ""];
           if (!prediction || !(prediction.data instanceof Float32Array) || prediction.data.length !== outputPlane * 3) throw new Error("Real-ESRGAN returned an invalid image.");
+          if (prediction.dims.join(",") !== "1,3,512,512") throw new Error("Real-ESRGAN returned an unsupported pixel layout.");
+          const tileSource = new Uint8ClampedArray(plane * 4);
+          for (let at = 0; at < plane; at++) {
+            for (let channel = 0; channel < 3; channel++) tileSource[at * 4 + channel] = values[channel * plane + at]! * 255;
+            tileSource[at * 4 + 3] = 255;
+          }
+          validateNeuralPixels(prediction.data, 512, 512, tileSource, 128, 128);
           const rgba = new Uint8ClampedArray(outputPlane * 4);
           for (let at = 0; at < outputPlane; at++) {
             for (let channel = 0; channel < 3; channel++) rgba[at * 4 + channel] = Math.round((prediction.data[channel * outputPlane + at] ?? 0) * 255);

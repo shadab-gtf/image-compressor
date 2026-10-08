@@ -1,10 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { FoxMark } from "@/components/brand/fox-mark";
+import { FoxMarkStatic } from "@/components/brand/fox-mark-static";
 import { DoodleIcon } from "@/components/ui/doodle-icon";
 import { useJobs, useRunState } from "@/stores/queue-store";
 
@@ -41,7 +40,6 @@ export function InstallPrompt() {
   const [event, setEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [busy, setBusy] = useState(false);
-  const reduced = useReducedMotion();
 
   const run = useRunState();
   const jobs = useJobs();
@@ -98,20 +96,12 @@ export function InstallPrompt() {
     Boolean(event) && !dismissed && !working && !EDITOR_ROUTES.has(pathname);
 
   return (
-    <AnimatePresence>
+    <>
       {open && (
-        <motion.div
-          initial={reduced ? { opacity: 0 } : { opacity: 0, y: 20 }}
-          animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0 }}
-          exit={reduced ? { opacity: 0 } : { opacity: 0, y: 14 }}
-          transition={
-            reduced
-              ? { duration: 0.12 }
-              : { type: "spring", stiffness: 300, damping: 30 }
-          }
-          className="fixed inset-x-3 bottom-[calc(var(--sf-mobile-nav-height,0px)+0.75rem)] z-40 mx-auto flex max-w-xl items-center gap-2 rounded-3xl border border-line bg-surface p-3 pl-4 shadow-lg sm:gap-4 sm:p-4 sm:pl-5 md:bottom-5"
+        <div
+          className="sf-notice-enter fixed inset-x-3 bottom-[calc(var(--sf-mobile-nav-height,0px)+0.75rem)] z-40 mx-auto flex max-w-xl items-center gap-2 rounded-3xl border border-line bg-surface p-3 pl-4 shadow-lg sm:gap-4 sm:p-4 sm:pl-5 md:bottom-5"
         >
-          <FoxMark size={34} className="hidden sm:block" />
+          <FoxMarkStatic size={34} className="hidden sm:block" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-ink">Install ShrinkFox</p>
             <p className="mt-0.5 text-[13px] leading-snug text-ink-2">
@@ -135,8 +125,8 @@ export function InstallPrompt() {
           >
             <DoodleIcon name="close" size={15} />
           </button>
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }

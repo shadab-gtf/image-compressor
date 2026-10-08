@@ -106,6 +106,7 @@ export function HomeSection({
                 alt="Terracotta vase with olive branches in warm sunlight"
                 width={1200}
                 height={800}
+                sizes="(max-width: 639px) calc(100vw - 58px), (max-width: 767px) calc(100vw - 66px), (max-width: 1023px) calc(100vw - 82px), (max-width: 1279px) calc(50vw - 90px), (max-width: 1535px) calc(50vw - 98px), calc(50vw - 114px)"
                 eager
               />
               <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-2 pb-1">

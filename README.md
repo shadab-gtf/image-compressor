@@ -57,7 +57,7 @@ There is no application subscription, daily quota or credit meter. This does not
 | Studio | 40 MiB input, 24 MP, 8,192px maximum edge; resized output must also fit |
 | Portrait AI | About 26 MB model plus about 14 MB runtime downloaded on demand |
 | BiRefNet Lite | About 192 MB model data plus shared runtime; needs substantial device memory |
-| Real-ESRGAN General | 1 MP input; about 5 MB model data plus shared runtime; padded tile processing |
+| Real-ESRGAN General | Automatically fitted input/output up to 24 MP; about 5 MB model data plus shared runtime; padded tile processing |
 
 JPEG and PNG are the most portable formats. WebP and AVIF depend on actual browser support. AVIF decoding does not imply AVIF encoding. Animated GIF, WebP, APNG and AVIF inputs export a still frame. TIFF support is limited by the browser. HEIC, RAW, PDF, SVG and JPEG XL are not supported.
 

@@ -4,9 +4,13 @@ import { useRouter } from "next/navigation";
 import { useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { DoodleIcon } from "@/components/ui/doodle-icon";
-import { DropZone } from "@/components/ui/drop-zone";
+import dynamic from "next/dynamic";
 import { addFiles, setOptions } from "@/stores/queue-store";
 import type { ProcessingOptions } from "@/types/options";
+
+const DropZone = dynamic(() => import("@/components/ui/drop-zone").then((module) => module.DropZone), {
+  loading: () => <div role="status" aria-label="Loading image upload" className="min-h-48 rounded-3xl bg-surface-2 motion-safe:animate-pulse" />,
+});
 
 /**
  * Entry point from any marketing or SEO page into the workspace.

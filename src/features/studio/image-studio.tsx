@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { DoodleIcon } from "@/components/ui/doodle-icon";
 import { formatBytes } from "@/lib/bytes";
 import { cn } from "@/lib/cn";
+import { fitStudioSize } from "@/lib/studio-size";
 import { runStudioOperation } from "@/services/studio-service";
 import { saveBlob } from "@/services/download-service";
 import { DEFAULT_CROP } from "@/types/editor";
@@ -72,6 +73,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
   const busy = progress !== null;
   const settingsKey = JSON.stringify(settings);
   const stale = result !== null && result.settingsKey !== settingsKey;
+  const outputSize = source ? fitStudioSize(source.width, source.height, settings.scale, source.processing === "lightweight" ? 2_000_000 : settings.enhancement === "standard" ? 6_000_000 : 24_000_000) : null;
 
   // Cache Components hides previous routes with Activity. Reset ephemeral image
   // state along with its resources so Back cannot revive revoked download URLs
@@ -117,7 +119,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
     setProgress({ fraction: 0, label: "Opening your image" });
     try {
       const image = await runStudioOperation(
-        { type: "inspect", file },
+        { type: "inspect", file, mode },
         controller.signal,
         setProgress,
       );
@@ -125,6 +127,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
       releaseUrl(source?.url);
       releaseUrl(result?.url);
       setSource({ ...image, file, url: createUrl(image.blob) });
+      setNotice(image.detail ?? null);
       setResult(null);
       setBaseCutout(null);
       setEditing(false);
@@ -274,7 +277,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
             ref={input}
             id={`${id}-file`}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/bmp,image/tiff,.jpg,.jpeg,.png,.webp,.avif,.gif,.bmp,.tif,.tiff"
+            accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/bmp,image/tiff,.jpg,.jpeg,.jfif,.jpe,.png,.webp,.avif,.gif,.bmp,.tif,.tiff"
             className="sr-only"
             tabIndex={-1}
             aria-label="Choose an image to edit"
@@ -347,6 +350,10 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
                       }
                     }}
                   />
+                  {busy && !removal && !cropping && <div className="sf-enhancing-overlay absolute inset-0 z-20 flex items-end justify-center overflow-hidden rounded-xl p-4" aria-hidden="true">
+                    <div className="sf-enhancing-sweep absolute inset-0" />
+                    <div className="relative rounded-full border border-white/40 bg-surface/95 px-5 py-3 text-center text-sm font-medium text-ink shadow-lg">Enhancing your image<span className="sf-enhancing-dots ml-1">…</span></div>
+                  </div>}
                   {result && (
                     <div
                       className={cn(
@@ -588,23 +595,23 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
                 value={settings.enhancement}
                 onChange={(event) => { const value = event.target.value; if (value === "ai" || value === "text" || value === "standard" || value === "deblur" || value === "face" || value === "restore" || value === "full") changeSetting("enhancement", value); }}
               >
+                <option value="standard">Fast enhance — no model download</option>
                 <option value="full">Full image — deblur + enhance</option>
                 <option value="restore">Full image + face repair</option>
                 <option value="ai">AI upscale — faster</option>
                 <option value="deblur">Motion deblur — NAFNet</option>
                 <option value="face">Restore faces — RestoreFormer++</option>
-                <option value="standard">Quick adjustments</option>
                 <option value="text">Screenshot & text — fast</option>
               </select>
             </div>
             <p className="text-xs leading-5 text-muted">
               {settings.enhancement === "ai"
-                ? "Restore small, soft photos with Real-ESRGAN General x4v3. Runs locally; up to 1 MP input. First use loads about 5 MB of model data plus the engine. Strong blur may remain and AI can change fine details."
-                : settings.enhancement === "deblur" ? "Reduce camera shake and motion blur with NAFNet. First use downloads 92 MB plus the engine. Up to 1 MP input; works locally with GPU acceleration where available. Severe defocus may remain."
+                ? "Restore soft photos with Real-ESRGAN General x4v3. Processes the image in tiles on your device. First use loads about 5 MB of model data plus the engine. Larger photos take longer."
+                : settings.enhancement === "deblur" ? "Reduce camera shake and motion blur with NAFNet. First use downloads 92 MB plus the engine. Works locally with GPU acceleration where available. Larger photos take longer."
                 : settings.enhancement === "face" ? "Automatically find and restore up to eight faces with RestoreFormer++. First use downloads 75 MB plus the engine. AI can change facial details: start at a lower strength and compare closely."
-                : settings.enhancement === "full" ? "Deblur the whole photo with NAFNet, then enhance detail across the entire frame with Real-ESRGAN: people, clothes, objects and background. Up to 1 MP input. Downloads about 97 MB of models plus the engine once. This is more thorough and takes longer than AI upscale."
+                : settings.enhancement === "full" ? "Deblur and enhance the whole photo in tiles, including people, clothes and backgrounds. Downloads about 97 MB of models plus the engine once. Choose Fast enhance for a quicker result without downloads."
                 : settings.enhancement === "restore" ? "Deblur and enhance the whole photo, then repair detected faces. Uses NAFNet, Real-ESRGAN and RestoreFormer++ (about 171 MB plus the engine). A desktop with GPU support is recommended. Facial details are estimates and can change."
-                : settings.enhancement === "text" ? "Fast enlargement for screenshots and posters, without photo AI changing letter shapes. After enhancing, read words with PaddleOCR and review any text you want to rebuild." : "Fast color and sharpening controls. Enlarging makes more pixels but does not reconstruct missing detail."}
+                : settings.enhancement === "text" ? "Fast enlargement for screenshots and posters, without photo AI changing letter shapes. After enhancing, read words with PaddleOCR and review any text you want to rebuild." : "Improve color, contrast and sharpness locally without model downloads. Original resolution by default; large outputs automatically fit 6 MP for speed. Aims for a result within 10 seconds; device speed and image format affect timing."}
             </p>
             {["deblur", "face", "restore", "full"].includes(settings.enhancement) && <StudioSlider id={`${id}-restoration-strength`} label="Restoration strength" value={settings.restorationStrength ?? 75} min={20} max={100} onChange={value => changeSetting("restorationStrength", value)} />}
             <StudioSlider
@@ -651,7 +658,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
                 <option value="3">3× — three times the width & height</option>
                 <option value="4">4× — four times the width & height</option>
               </select>
-              {source && <p className="mt-2 text-xs leading-5 text-muted">Output: {source.width * settings.scale} × {source.height * settings.scale} px · PNG</p>}
+              {outputSize && <p className="mt-2 text-xs leading-5 text-muted">Output: {outputSize.width} × {outputSize.height} px · PNG</p>}
             </div>
           </fieldset>
         )}
@@ -670,7 +677,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
               {removal
                 ? "Use BiRefNet AI for products, people and general subjects. Portrait AI uses a smaller model for people. Simple background needs no AI download. Check hair, glass and fine edges before downloading; difficult cutouts may need manual editing."
                 : cropping ? "Selection dimensions refer to the original photo. Rotation happens after cropping. Transparent corners from straightening remain transparent in PNG. Output must fit 24 megapixels and 8,192 pixels per side."
-                : "Try 2× first for a natural result. AI predicts detail, so check faces, text and textures before downloading. It cannot guarantee recovery of severe motion blur or unreadable text. AI input is limited to 1 megapixel; Quick adjustments supports larger images. All exports must fit 24 megapixels and 8,192 pixels per side."}
+                : "Use Fast enhance for the shortest wait. Supported images under 2 MB can be opened regardless of aspect ratio; very large dimensions automatically fit the processing canvas. Fast output fits 6 MP; AI output fits 24 MP. AI modes take longer and estimate missing detail. Compare the result before saving."}
             </p>
             <p>
               Animation is saved as a still image. If a large photo is slow to
@@ -822,7 +829,7 @@ export function ImageStudio({ mode }: { mode: StudioMode }) {
         }} />}
       </div>}
       {cropping && source && <div className="col-span-full overflow-hidden border-t border-line p-6"><CropEditor url={source.url} width={source.width} height={source.height} value={settings.crop ?? DEFAULT_CROP} onChange={(value) => changeSetting("crop", value)} /></div>}
-      {!removal && !cropping && source && result && <div className="col-span-full p-6"><TextRestoration key={source.url} source={source.blob} output={result} onApply={image => {
+      {!removal && !cropping && source && result && <div className="col-span-full p-6"><TextRestoration key={source.url} source={/image\/(png|jpeg|webp|avif|gif|bmp)/.test(source.file.type) ? source.file : source.blob} output={result} onApply={image => {
         releaseUrl(result.url);
         setResult({ ...image, url: createUrl(image.blob, withExtension(source.file.name, "png")), settingsKey });
         setNotice("Reviewed text applied. Compare the result before downloading.");

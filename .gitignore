@@ -51,7 +51,9 @@ next-env.d.ts
 /temp/ai-enhance.png
 /temp/birefnet-result.png
 /temp/restoration/
+/temp/drawing-check/
 /temp/lighthouse-seo.json
+/temp/perf-*.json
 /public/wasm/*.wasm
 /public/wasm/*.mjs
 /public/codecs/*.wasm

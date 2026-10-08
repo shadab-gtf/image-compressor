@@ -1,5 +1,33 @@
 import assert from "node:assert/strict";
 import { enhancePixels, removeSolidBackground } from "../src/services/studio-pixels.ts";
+import { fitStudioSize } from "../src/lib/studio-size.ts";
+import { formatOcrConfidence } from "../src/lib/ocr-confidence.ts";
+import { validateNeuralPixels } from "../src/services/neural-quality.ts";
+
+const flatSource = new Uint8ClampedArray(32 * 32 * 4).fill(128);
+const flatPrediction = new Float32Array(32 * 32 * 3).fill(0.5);
+validateNeuralPixels(flatPrediction, 32, 32, flatSource, 32, 32);
+const corruptedPrediction = Float32Array.from(flatPrediction, (_, at) => at % 2);
+assert.throws(() => validateNeuralPixels(corruptedPrediction, 32, 32, flatSource, 32, 32), /noise/);
+flatPrediction[0] = Number.NaN;
+assert.throws(() => validateNeuralPixels(flatPrediction, 32, 32, flatSource, 32, 32), /invalid/);
+
+assert.equal(formatOcrConfidence(0.9999), "99.9%");
+assert.equal(formatOcrConfidence(1), "100%");
+assert.equal(formatOcrConfidence(0), "0%");
+assert.equal(formatOcrConfidence(Number.NaN), "Unavailable");
+assert.equal(formatOcrConfidence(1.1), "Unavailable");
+
+assert.deepEqual(fitStudioSize(900, 600, 1, 6_000_000), { width: 900, height: 600, scale: 1 });
+for (const [width, height] of [[6000, 4000], [30000, 100], [100, 30000], [50000, 50000]]) {
+  for (const budget of [6_000_000, 24_000_000]) {
+    const fitted = fitStudioSize(width!, height!, 4, budget);
+    assert.ok(fitted.width * fitted.height <= budget);
+    assert.ok(fitted.width <= 8192 && fitted.height <= 8192);
+    assert.ok(Math.abs(fitted.width / width! - fitted.height / height!) <= 1 / Math.min(width!, height!));
+  }
+}
+assert.throws(() => fitStudioSize(Number.NaN, 100));
 
 const width = 9;
 const height = 9;

@@ -32,11 +32,6 @@ const pinSans = localFont({
       weight: "700",
       style: "normal",
     },
-    {
-      path: "../../public/fonts/Pin-Sans-MacOS-Heavy-2b6abf8c.woff2",
-      weight: "900",
-      style: "normal",
-    },
   ],
   variable: "--font-pin-sans",
   display: "swap",

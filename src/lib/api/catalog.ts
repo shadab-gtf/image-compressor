@@ -20,6 +20,14 @@ function options(
 }
 const tools: ToolDefinition[] = [
   {
+    slug: "smart-draw", name: "Smart Draw", seoTitle: "Free Online Drawing Tool with Sketch Suggestions",
+    title: "A little sketch. A clearer idea.",
+    description: "Sketch with your mouse, finger or pen, then turn your doodles into clean drawings. Add shapes and text, arrange your ideas and export your creation — right in your browser.",
+    shortDescription: "Draw, discover clean sketch suggestions and create graphics.", icon: "enhance", featured: true, badge: "New",
+    steps: ["Start sketching, or search the built-in drawing library.", "Choose a suggestion, add text and shapes, and arrange your layers.", "Download PNG or SVG, or save an editable project for later."],
+    note: "Smart Draw matches sketches to an original local symbol library. It is independent of Google AutoDraw and does not use Google's recognition service. Your drawing stays on your device. Projects autosave locally; download a project file to keep a separate copy. Sharing uses your device's share sheet when available.",
+  },
+  {
     slug: "export-recipes", name: "Export recipes", seoTitle: "Free Multi-Size Image Export",
     title: "One photo. Every size you need.", description: "Prepare a product listing, website card and social post together. Edit the sizes, names and formats, then download your variants in one ZIP. Your photo stays on your device.",
     shortDescription: "Create named image variants in one ZIP.", icon: "layers",
@@ -123,7 +131,7 @@ const tools: ToolDefinition[] = [
       "Choose full-image enhancement, add face repair if needed, or use AI upscale for a faster result.",
       "Compare the result with the original and download the finished PNG.",
     ],
-    note: "Full-image enhancement combines NAFNet deblurring with Real-ESRGAN. Face repair adds RestoreFormer++. AI accepts up to 1 MP input and estimates missing detail; compare faces, lettering and textures before saving. Quick adjustments handles larger photos. No credits, signup or watermark.",
+    note: "Fast enhance improves color, contrast and sharpness without model downloads. Large images automatically fit the processing canvas. Optional AI deblur and restoration take longer and estimate missing detail. Compare faces, lettering and textures before saving. No credits, signup or watermark.",
   },
   {
     slug: "bulk-image-compressor",
@@ -270,7 +278,7 @@ const tools: ToolDefinition[] = [
 // Static navigation is derived from the catalog; rendering a header performs no fetching.
 function navigationCategory(tool: ToolDefinition): string {
   if (tool.slug.startsWith("compress-image-to-")) return "target-size";
-  if (tool.mode || tool.slug.startsWith("bulk-")) return "studio-batch";
+  if (tool.mode || tool.slug === "smart-draw" || tool.slug.startsWith("bulk-")) return "studio-batch";
   if (tool.icon === "convert" && tool.slug !== "convert-image")
     return "quick-convert";
   return "essentials";

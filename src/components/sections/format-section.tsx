@@ -69,8 +69,10 @@ export function FormatSection({ formats }: { formats: readonly FormatInfo[] }) {
             <p className="mt-3 text-sm leading-7 text-muted">
               These tools accept files up to 40 MiB, 24 megapixels and 8,192
               pixels on either side, and save the result as PNG. Every enlarged
-              export must stay within those limits. Real-ESRGAN enhancement
-              accepts up to 1 megapixel input and exports at 2×, 3× or 4×.
+              export must stay within those limits. Enhancement automatically
+              fits large images and exports to the canvas. Fast enhance defaults
+              to original resolution with a 6 MP output budget; optional tiled AI
+              modes allow up to 24 MP output and take longer.
               BiRefNet Lite handles general subjects and downloads about 192 MB
               of model data; Portrait AI offers a smaller model for people.
               AI predicts detail and masks, so check the result before saving.

@@ -18,6 +18,7 @@ const groups = [
     links: [
       { href: "/remove-background", label: "Remove background" },
       { href: "/enhance-image", label: "Enhance image" },
+      { href: "/smart-draw", label: "Smart Draw" },
       { href: "/png-to-webp", label: "PNG to WebP" },
       { href: "/webp-to-jpg", label: "WebP to JPG" },
     ],

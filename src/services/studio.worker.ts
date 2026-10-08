@@ -4,6 +4,7 @@ import type { StudioImage, StudioRequest, StudioResponse, StudioSettings } from 
 import { enhancePixels, removeSolidBackground } from "./studio-pixels";
 import { cropGeometry, fillBackground, paintStroke } from "@/engines/editor";
 import { DEFAULT_CROP } from "@/types/editor";
+import { fitStudioSize } from "@/lib/studio-size";
 
 const MAX_PIXELS = 24_000_000;
 const MAX_EDGE = 8192;
@@ -32,7 +33,7 @@ function validateSize(width: number, height: number): void {
   }
 }
 
-async function decode(file: File): Promise<ImageBitmap> {
+async function decode(file: File, enhancement = false): Promise<ImageBitmap> {
   if (file.size === 0) throw new Error("This file is empty. Please choose another image.");
   if (file.size > 40 * 1024 * 1024) throw new Error("Choose an image smaller than 40 MB for this studio.");
   const bytes = new Uint8Array(await file.slice(0, HEADER_BYTES).arrayBuffer());
@@ -40,10 +41,13 @@ async function decode(file: File): Promise<ImageBitmap> {
   if (!format) throw new Error("Choose a JPEG, PNG, WebP, AVIF, GIF or BMP image. This file’s contents are not supported.");
   const dimensions = readHeaderDimensions(bytes, format);
   if (!dimensions) throw new Error("The image header is damaged or cannot be read safely. Export it as JPEG or PNG and try again.");
-  validateSize(dimensions.width, dimensions.height);
+  const fitted = fitStudioSize(dimensions.width, dimensions.height);
+  if (!enhancement || format === "tiff") validateSize(dimensions.width, dimensions.height);
   let bitmap: ImageBitmap;
   try {
-    bitmap = format === "tiff" ? await (await import("@/engines/tiff")).decodeTiff(file) : await createImageBitmap(file, { imageOrientation: "from-image" });
+    const resize = enhancement && (fitted.width !== dimensions.width || fitted.height !== dimensions.height)
+      ? { resizeWidth: fitted.width, resizeHeight: fitted.height, resizeQuality: "high" as const } : {};
+    bitmap = format === "tiff" ? await (await import("@/engines/tiff")).decodeTiff(file) : await createImageBitmap(file, { imageOrientation: "from-image", ...resize });
   } catch (cause) {
     if (format === "tiff" && cause instanceof Error) throw cause;
     throw new Error("This browser could not read the image. Try a JPEG or PNG version, or update your browser.");
@@ -182,13 +186,12 @@ async function processImage(request: Extract<StudioRequest, { type: "process" }>
     return { blob: await output.canvas.convertToBlob({ type: "image/png" }), width: plan.width, height: plan.height };
   }
   const settings: StudioSettings = request.settings;
-  const scale = request.mode === "enhance-image" ? settings.scale : 1;
-  const width = bitmap.width * scale;
-  const height = bitmap.height * scale;
+  const fitted = fitStudioSize(bitmap.width, bitmap.height, request.mode === "enhance-image" ? settings.scale : 1,
+    request.mode === "enhance-image" && settings.enhancement === "standard" ? 6_000_000 : MAX_PIXELS);
+  const scale = fitted.scale;
+  const width = fitted.width;
+  const height = fitted.height;
   validateSize(width, height);
-  if (request.mode === "enhance-image" && !["standard", "text"].includes(settings.enhancement) && bitmap.width * bitmap.height > 1_000_000) {
-    throw new Error("AI restoration accepts up to 1 megapixel here. Resize your photo first, or choose Quick adjustments for larger images.");
-  }
   const output = canvas2d(width, height);
   output.context.imageSmoothingEnabled = true;
   output.context.imageSmoothingQuality = "high";
@@ -255,7 +258,10 @@ async function processImage(request: Extract<StudioRequest, { type: "process" }>
       : removeSolidBackground(pixels.data, width, height, settings.tolerance);
     output.context.putImageData(new ImageData(new Uint8ClampedArray(result), width, height), 0, 0);
   }
-  progress(0.94, "Creating your full-resolution PNG");
+  if (request.mode === "enhance-image" && settings.enhancement === "standard") {
+    detail = `Fast enhancement complete: ${width} × ${height} PNG. Color, contrast and sharpening applied without AI downloads.${width !== bitmap.width * settings.scale || height !== bitmap.height * settings.scale ? " Output automatically sized for faster processing." : ""}`;
+  }
+  progress(0.94, "Creating your PNG");
   const blob = await output.canvas.convertToBlob({ type: "image/png" });
   return { blob, width, height, detail };
 }
@@ -292,7 +298,7 @@ scope.onmessage = async (event: MessageEvent<StudioRequest>) => {
   let bitmap: ImageBitmap | undefined;
   try {
     progress(0.02, "Reading your image securely on this device");
-    bitmap = await decode(event.data.file);
+    bitmap = await decode(event.data.file, (event.data.type === "process" || event.data.type === "inspect") && event.data.mode === "enhance-image");
     if (event.data.type === "inspect") {
       // Decode the preview too, so animation, EXIF orientation and color handling
       // match processing. The original file is never placed in a network URL.

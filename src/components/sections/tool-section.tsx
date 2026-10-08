@@ -9,10 +9,13 @@ import { UploadEntry } from "@/features/bulk/upload-entry";
 import { StudioLoader } from "@/features/studio/studio-loader";
 import { RecipeLoader } from "@/features/recipes/recipe-loader";
 import type { ToolDefinition } from "@/types/catalog";
+import type { DrawingSymbol } from "@/types/drawing";
+import { DrawingLoader } from "@/features/drawing/drawing-loader";
+import { DrawingSkeleton } from "@/features/drawing/drawing-skeleton";
 
 const stepIcons = ["select-image", "adjust-image", "save-image"] as const;
 
-export function ToolSection({ tool }: { tool: ToolDefinition }) {
+export function ToolSection({ tool, symbols }: { tool: ToolDefinition; symbols?: readonly DrawingSymbol[] }) {
   return (
     <div className="flex min-h-dvh flex-col">
       <SiteHeader />
@@ -39,8 +42,8 @@ export function ToolSection({ tool }: { tool: ToolDefinition }) {
           </div>
         </section>
         <section aria-label={tool.name} className="sf-page-shell pb-8 md:pb-12">
-          <Suspense fallback={<WorkspaceSkeleton />}>
-            {tool.slug === "export-recipes" ? <RecipeLoader /> : tool.mode ? (
+          <Suspense fallback={tool.slug === "smart-draw" ? <DrawingSkeleton /> : <WorkspaceSkeleton />}>
+            {tool.slug === "smart-draw" ? <DrawingLoader symbols={symbols ?? []} /> : tool.slug === "export-recipes" ? <RecipeLoader /> : tool.mode ? (
               <StudioLoader key={tool.mode} mode={tool.mode} />
             ) : (
               <div className="sf-card-flat p-4 md:p-8">

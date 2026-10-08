@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@keyframes sf-notice-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sf-notice-enter { animation: sf-notice-enter 180ms ease-out; }
+}
+
 /* Dark mode is attribute-driven, not media-driven, so the in-app toggle wins.
    The resolved value is written to <html data-theme> before first paint. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
@@ -528,4 +536,19 @@ button {
     background: var(--sf-accent);
     box-shadow: var(--sf-shadow-md);
   }
+}
+/* Keep waiting motion on composited layers; reduced motion retains a static tint. */
+.sf-enhancing-overlay { background: rgb(122 92 209 / 8%); isolation: isolate; }
+.sf-enhancing-sweep {
+  background: linear-gradient(115deg, transparent 15%, rgb(121 99 241 / 15%) 35%, rgb(87 203 216 / 28%) 50%, rgb(240 152 181 / 18%) 65%, transparent 85%);
+  transform: translateX(-110%);
+  animation: sf-enhance-sweep 2.4s ease-in-out infinite;
+}
+.sf-enhancing-dots { animation: sf-enhance-breathe 1.2s ease-in-out infinite; }
+.sf-drawing-workspace:fullscreen { overflow: auto; border-radius: 0; }
+@keyframes sf-enhance-sweep { to { transform: translateX(110%); } }
+@keyframes sf-enhance-breathe { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) {
+  .sf-enhancing-sweep { animation: none; transform: none; }
+  .sf-enhancing-dots { animation: none; }
 }

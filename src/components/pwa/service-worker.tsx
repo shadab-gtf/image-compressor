@@ -1,6 +1,5 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DoodleIcon } from "@/components/ui/doodle-icon";
@@ -9,7 +8,6 @@ export function ServiceWorker() {
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [reloading, setReloading] = useState(false);
-  const reduced = useReducedMotion();
   // controllerchange also fires on the very first install, when there was no
   // previous controller. Reloading then would bounce a page the user just
   // opened, so the reload is armed only by the update button.
@@ -101,22 +99,12 @@ export function ServiceWorker() {
   const open = Boolean(waiting) && !dismissed;
 
   return (
-    <AnimatePresence>
+    <>
       {open && (
-        <motion.div
+        <div
           role="status"
           aria-live="polite"
-          initial={
-            reduced ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.97 }
-          }
-          animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
-          exit={reduced ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.98 }}
-          transition={
-            reduced
-              ? { duration: 0.12 }
-              : { type: "spring", stiffness: 320, damping: 30 }
-          }
-          className="fixed inset-x-3 top-[calc(4rem+0.75rem)] z-50 mx-auto grid max-w-lg grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2 rounded-2xl border border-line bg-surface p-3 pl-4 shadow-lg sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center md:top-auto md:left-auto md:right-6 md:bottom-6 md:mx-0"
+          className="sf-notice-enter fixed inset-x-3 top-[calc(4rem+0.75rem)] z-50 mx-auto grid max-w-lg grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2 rounded-2xl border border-line bg-surface p-3 pl-4 shadow-lg sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center md:top-auto md:left-auto md:right-6 md:bottom-6 md:mx-0"
         >
           <p className="min-w-0 flex-1 text-sm leading-snug text-ink-2">
             <span className="font-semibold text-ink">
@@ -142,8 +130,8 @@ export function ServiceWorker() {
           >
             <DoodleIcon name="close" size={15} />
           </button>
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }

@@ -6,6 +6,7 @@ import {
   type Progress,
 } from "./studio-neural";
 import type { InferenceSession, Tensor } from "onnxruntime-web";
+import { validateNeuralPixels } from "./neural-quality";
 
 const MODEL_SIZES = {
   nafnet: 91736251,
@@ -94,6 +95,8 @@ async function predict(
     const data = predictions[name]?.data;
     if (!(data instanceof Float32Array) || data.length !== width * height * 3)
       throw new Error("The restoration model returned an invalid image.");
+    if (predictions[name]?.dims.join(",") !== `1,3,${height},${width}`) throw new Error("Restoration returned an unsupported pixel layout.");
+    validateNeuralPixels(data, width, height, rgba, width, height, range === "signed");
     const plane = width * height,
       output = new Uint8ClampedArray(plane * 4);
     for (let i = 0; i < plane; i++) {
